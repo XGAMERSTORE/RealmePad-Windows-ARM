@@ -1,22 +1,21 @@
 #!/sbin/sh
-# Read-only TWRP compatibility check. No flashing.
+# Read-only TWRP compatibility check for both RMP2102 and RMP2103.
 OUTFD="$2"
 ui() { echo "ui_print $1" > "/proc/self/fd/$OUTFD"; echo "ui_print" > "/proc/self/fd/$OUTFD"; }
 ui "RMP6768 Windows ARM research - READ ONLY"
 ui "No partitions will be modified."
-for key in ro.product.device ro.product.model ro.boot.hardware ro.boot.bootloader; do
+for key in ro.product.device ro.product.model ro.product.name ro.boot.hardware ro.boot.bootloader ro.boot.radio; do
   value="$(getprop "$key" 2>/dev/null)"
   ui "$key: ${value:-unknown}"
 done
-device="$(getprop ro.product.device 2>/dev/null)"
-case "$device" in
-  RMP6768|rmp6768|RMP2102|RMP2103|rmp2102|rmp2103)
-    ui "Device name looks compatible with the research family."
-    ;;
-  *)
-    ui "Device name not recognized; stop here."
-    ;;
+identity="$(getprop ro.product.model 2>/dev/null) $(getprop ro.product.device 2>/dev/null) $(getprop ro.product.name 2>/dev/null)"
+case "$identity" in
+  *RMP2102*|*rmp2102*) ui "Model hint: RMP2102 LTE variant." ;;
+  *RMP2103*|*rmp2103*) ui "Model hint: RMP2103 Wi-Fi variant." ;;
+  *RMP6768*|*rmp6768*) ui "Shared board RMP6768 detected; variant NOT confirmed." ;;
+  *) ui "Unknown model: do not use any future flashing package." ;;
 esac
+ui "LTE modem functionality is NOT provided by this checker."
 ui "No Windows firmware, drivers or installer are included."
 ui "Finished without writing to storage."
 exit 0
