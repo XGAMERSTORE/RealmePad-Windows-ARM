@@ -45,6 +45,12 @@ class BootLayoutTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare(header, BOARD)
 
+    def test_rejects_truncated_v0(self):
+        header = self.header()
+        struct.pack_into("<I", header, 40, 0)
+        with self.assertRaisesRegex(ValueError, "Truncated v0"):
+            compare(header[:1631], BOARD)
+
     def test_rejects_truncated_v1(self):
         header = self.header()
         struct.pack_into("<I", header, 40, 1)
