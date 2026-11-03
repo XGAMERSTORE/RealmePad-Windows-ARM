@@ -9,13 +9,13 @@ import struct
 from pathlib import Path
 
 def compare(header, board):
-    if len(header) < 1660 or header[:8] != b"ANDROID!":
+    if len(header) < 48 or header[:8] != b"ANDROID!":
         raise ValueError("Missing or truncated Android boot header")
     boot = board["android_boot"]
     version = struct.unpack_from("<I", header, 40)[0]
-    if version > 2:
+    if version not in (0, 1, 2):
         raise ValueError("Unsupported Android boot header version (v3+ uses a different layout)")
-    page_size = struct.unpack_from("<I", header, 36)[0]
+    if version == 1 and len(header) < 1648:\n        raise ValueError("Truncated v1 Android boot header")\n    if version == 2 and len(header) < 1660:\n        raise ValueError("Truncated v2 Android boot header")\n    page_size = struct.unpack_from("<I", header, 36)[0]
     kernel_addr = struct.unpack_from("<I", header, 12)[0]
     ramdisk_addr = struct.unpack_from("<I", header, 20)[0]
     tags_addr = struct.unpack_from("<I", header, 32)[0]
