@@ -64,11 +64,11 @@ UefiMain (
         HasAcpi10 = TRUE;
       }
     }
-    Print(L"ACPI 2.0+ table pointer present: %s\\r\\n", HasAcpi20 ? L"yes" : L"no");
-    Print(L"ACPI 1.0 table pointer present: %s\\r\\n", HasAcpi10 ? L"yes" : L"no");
-    Print(L"ACPI presence does NOT imply Windows driver compatibility.\\r\\n");
+    Print(L"ACPI 2.0+ table pointer present: %s\r\n", HasAcpi20 ? L"yes" : L"no");
+    Print(L"ACPI 1.0 table pointer present: %s\r\n", HasAcpi10 ? L"yes" : L"no");
+    Print(L"ACPI presence does NOT imply Windows driver compatibility.\r\n");
   }
-  Print(L"No storage writes or firmware changes performed.\\r\\n");
+  Print(L"No storage writes or firmware changes performed.\r\n");
   Print(L"This does NOT initialize Helio G80 hardware.\r\n");
   return Status;
 }
