@@ -18,3 +18,5 @@
 [LibraryClasses]
   UefiApplicationEntryPoint
   UefiLib
+  UefiBootServicesTableLib
+  MemoryAllocationLib
