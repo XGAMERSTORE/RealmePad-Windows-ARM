@@ -6,6 +6,7 @@
 #include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Guid/Acpi.h>
 
 EFI_STATUS
 EFIAPI
@@ -49,7 +50,24 @@ UefiMain (
     Print(L"GetMemoryMap failed: %r\r\n", Status);
   }
   FreePool(Map);
-  Print(L"No storage writes or firmware changes performed.\r\n");
+  {
+    UINTN Index;
+    BOOLEAN HasAcpi20 = FALSE;
+    BOOLEAN HasAcpi10 = FALSE;
+    for (Index = 0; Index < SystemTable->NumberOfTableEntries; ++Index) {
+      EFI_CONFIGURATION_TABLE *Entry = &SystemTable->ConfigurationTable[Index];
+      if (CompareGuid(&Entry->VendorGuid, &gEfiAcpi20TableGuid)) {
+        HasAcpi20 = TRUE;
+      }
+      if (CompareGuid(&Entry->VendorGuid, &gEfiAcpi10TableGuid)) {
+        HasAcpi10 = TRUE;
+      }
+    }
+    Print(L"ACPI 2.0+ table pointer present: %s\\r\\n", HasAcpi20 ? L"yes" : L"no");
+    Print(L"ACPI 1.0 table pointer present: %s\\r\\n", HasAcpi10 ? L"yes" : L"no");
+    Print(L"ACPI presence does NOT imply Windows driver compatibility.\\r\\n");
+  }
+  Print(L"No storage writes or firmware changes performed.\\r\\n");
   Print(L"This does NOT initialize Helio G80 hardware.\r\n");
   return Status;
 }
