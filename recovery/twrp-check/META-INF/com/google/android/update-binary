@@ -1,0 +1,22 @@
+#!/sbin/sh
+# Read-only TWRP compatibility check. No flashing.
+OUTFD="$2"
+ui() { echo "ui_print $1" > "/proc/self/fd/$OUTFD"; echo "ui_print" > "/proc/self/fd/$OUTFD"; }
+ui "RMP6768 Windows ARM research - READ ONLY"
+ui "No partitions will be modified."
+for key in ro.product.device ro.product.model ro.boot.hardware ro.boot.bootloader; do
+  value="$(getprop "$key" 2>/dev/null)"
+  ui "$key: ${value:-unknown}"
+done
+device="$(getprop ro.product.device 2>/dev/null)"
+case "$device" in
+  RMP6768|rmp6768|RMP2102|RMP2103|rmp2102|rmp2103)
+    ui "Device name looks compatible with the research family."
+    ;;
+  *)
+    ui "Device name not recognized; stop here."
+    ;;
+esac
+ui "No Windows firmware, drivers or installer are included."
+ui "Finished without writing to storage."
+exit 0
