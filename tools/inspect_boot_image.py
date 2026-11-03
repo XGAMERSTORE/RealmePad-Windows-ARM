@@ -25,8 +25,9 @@ def inspect(data):
     # Legacy v0/v1/v2: page_size at 36, header_version at 40.
     if version not in (0, 1, 2):
         raise ValueError(f"Unknown boot header version: {version}")
-    if len(data) < 48:
-        raise ValueError("Truncated legacy boot header")
+    minimum_size = (1632, 1648, 1660)[version]
+    if len(data) < minimum_size:
+        raise ValueError(f"Truncated v{version} Android boot header")
     kernel_size = struct.unpack_from("<I", data, 8)[0]
     ramdisk_size = struct.unpack_from("<I", data, 16)[0]
     page_size = struct.unpack_from("<I", data, 36)[0]
