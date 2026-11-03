@@ -10,10 +10,13 @@ def inspect(data):
     if len(data) < 0x40 or data[:2] != b"MZ":
         raise ValueError("Not an MZ executable")
     pe_offset = struct.unpack_from("<I", data, 0x3c)[0]
-    if pe_offset + 26 > len(data) or data[pe_offset:pe_offset + 4] != b"PE\0\0":
+    if pe_offset > len(data) - 24 or data[pe_offset:pe_offset + 4] != b"PE\0\0":
         raise ValueError("Invalid PE header")
     machine = struct.unpack_from("<H", data, pe_offset + 4)[0]
+    optional_size = struct.unpack_from("<H", data, pe_offset + 20)[0]
     optional_offset = pe_offset + 24
+    if optional_size < 70 or optional_offset + optional_size > len(data):
+        raise ValueError("Missing or truncated PE optional header")
     magic = struct.unpack_from("<H", data, optional_offset)[0]
     subsystem = struct.unpack_from("<H", data, optional_offset + 68)[0]
     if machine != 0xaa64:
