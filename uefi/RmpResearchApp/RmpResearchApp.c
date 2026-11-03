@@ -36,7 +36,11 @@ UefiMain (
   }
 
   // Firmware may add descriptors when allocating; leave headroom.
-  MapSize += 2 * sizeof(EFI_MEMORY_DESCRIPTOR) + 2 * DescriptorSize;
+  if (DescriptorSize == 0 || MapSize > MAX_UINTN - 4 * DescriptorSize) {
+    Print(L"Invalid memory descriptor size or overflow\r\n");
+    return EFI_BAD_BUFFER_SIZE;
+  }
+  MapSize += 4 * DescriptorSize;
   Map = AllocatePool(MapSize);
   if (Map == NULL) {
     Print(L"Memory allocation failed\r\n");
