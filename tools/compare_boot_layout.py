@@ -13,6 +13,8 @@ def compare(header, board):
         raise ValueError("Missing or truncated Android boot header")
     boot = board["android_boot"]
     version = struct.unpack_from("<I", header, 40)[0]
+    if version > 2:
+        raise ValueError("Unsupported Android boot header version (v3+ uses a different layout)")
     page_size = struct.unpack_from("<I", header, 36)[0]
     kernel_addr = struct.unpack_from("<I", header, 12)[0]
     ramdisk_addr = struct.unpack_from("<I", header, 20)[0]
