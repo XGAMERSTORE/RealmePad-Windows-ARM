@@ -44,10 +44,19 @@ class BootHeaderTests(unittest.TestCase):
                     inspect(data)
 
     def test_legacy(self):
-        data = bytearray(64)
+        data = bytearray(1632)
         data[:8] = b"ANDROID!"
         struct.pack_into("<I", data, 36, 4096)
         self.assertEqual(inspect(data)["page_size"], 4096)
+
+    def test_rejects_truncated_legacy_headers(self):
+        for version, size in ((0, 1632), (1, 1648), (2, 1660)):
+            with self.subTest(version=version):
+                data = bytearray(size - 1)
+                data[:8] = b"ANDROID!"
+                struct.pack_into("<I", data, 40, version)
+                with self.assertRaisesRegex(ValueError, "Truncated"):
+                    inspect(data)
 
     def test_bad_magic(self):
         with self.assertRaises(ValueError):
