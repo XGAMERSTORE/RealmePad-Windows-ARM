@@ -34,7 +34,7 @@ jobs:
           cd "$WORKSPACE"
           make -C BaseTools -j2
           source edksetup.sh
-          build -a AARCH64 -t GCC5 -b DEBUG -p uefi/RmpResearchHost.dsc
+          build -a AARCH64 -t GCC5 -b DEBUG -p "$GITHUB_WORKSPACE/project/uefi/RmpResearchHost.dsc"
           find Build/RmpResearchHost -type f -name 'RmpResearchApp.efi' -print -quit | grep -q .
           find Build/RmpResearchHost -type f -name 'RmpResearchApp.efi' -print -quit | xargs -r -I '{}' cp '{}' "$GITHUB_WORKSPACE/RmpResearchApp.efi"
           test -s "$GITHUB_WORKSPACE/RmpResearchApp.efi"
