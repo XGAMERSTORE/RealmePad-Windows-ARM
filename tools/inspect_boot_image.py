@@ -14,10 +14,11 @@ def inspect(data):
     version = struct.unpack_from("<I", data, 40)[0]
     if version in (3, 4):
         kernel_size, ramdisk_size, os_version, header_size = struct.unpack_from("<4I", data, 8)
-        if header_size < 1580 or header_size > 65536:
+        expected_size = 1580 if version == 3 else 1584
+        if header_size != expected_size:
             raise ValueError("Invalid v3/v4 boot header size")
-        if version == 4 and len(data) < 1584:
-            raise ValueError("Truncated v4 boot header")
+        if len(data) < header_size:
+            raise ValueError("Truncated v3/v4 boot header")
         return {"format": "android_boot", "header_version": version,
                 "kernel_size": kernel_size, "ramdisk_size": ramdisk_size,
                 "header_size": header_size, "flashable": False}
