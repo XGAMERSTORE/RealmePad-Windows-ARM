@@ -24,4 +24,4 @@
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
 
 [Components]
-  RmpResearchApp/RmpResearchApp.inf
+  uefi/RmpResearchApp/RmpResearchApp.inf
