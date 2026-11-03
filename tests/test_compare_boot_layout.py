@@ -27,6 +27,14 @@ class BootLayoutTests(unittest.TestCase):
     def test_mismatched_layout(self):
         self.assertFalse(compare(self.header(4096), BOARD)["matches_upstream_config"])
 
+    def test_rejects_modern_header_versions(self):
+        for version in (3, 4, 0xffffffff):
+            with self.subTest(version=version):
+                data = self.header()
+                struct.pack_into("<I", data, 40, version)
+                with self.assertRaisesRegex(ValueError, "Unsupported Android boot header"):
+                    compare(data, BOARD)
+
     def test_truncated(self):
         with self.assertRaises(ValueError):
             compare(b"ANDROID!", BOARD)
