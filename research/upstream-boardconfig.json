@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "source": {
+    "repository": "Realme-Pad-Dev/android_device_realme_RMP6768",
+    "branch": "lineage-20.0",
+    "path": "BoardConfig.mk",
+    "url": "https://github.com/Realme-Pad-Dev/android_device_realme_RMP6768/blob/lineage-20.0/BoardConfig.mk"
+  },
+  "board": "RMP6768",
+  "soc": "mt6768",
+  "architecture": "arm64",
+  "models": [
+    "RMP2102",
+    "RMP2103"
+  ],
+  "android_boot": {
+    "header_version": 2,
+    "page_size": 2048,
+    "kernel_base": "0x40078000",
+    "kernel_offset": "0x00008000",
+    "ramdisk_offset": "0x07c08000",
+    "tags_offset": "0x0bc08000",
+    "dtb_offset": "0x0bc08000",
+    "second_offset": "0x00e88000",
+    "boot_partition_size": 33554432,
+    "recovery_partition_size": 33554432,
+    "dtbo_partition_size": 8388608
+  },
+  "windows_uefi_ready": false,
+  "verified_on_hardware": false
+}
