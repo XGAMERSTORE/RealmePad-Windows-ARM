@@ -24,7 +24,7 @@ def inspect(data):
     # Legacy v0/v1/v2: page_size at 36, header_version at 40.
     if version not in (0, 1, 2):
         raise ValueError(f"Unknown boot header version: {version}")
-    if len(data) < 1648:
+    if len(data) < 48:
         raise ValueError("Truncated legacy boot header")
     kernel_size = struct.unpack_from("<I", data, 8)[0]
     ramdisk_size = struct.unpack_from("<I", data, 16)[0]
