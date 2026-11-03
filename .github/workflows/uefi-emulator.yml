@@ -25,7 +25,7 @@ jobs:
           cd edk2
           git submodule update --init --recursive
       - name: Test EFI verifier
-        run: python3 -m unittest discover -s project/tests -p 'test_verify_efi.py' -v
+        run: cd project && python3 -m unittest discover -s tests -p 'test_verify_efi.py' -v
       - name: Compile AARCH64 UEFI app
         shell: bash
         run: |
