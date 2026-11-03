@@ -1,0 +1,38 @@
+name: ARM64 UEFI app build (emulator only)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: project
+      - name: Install cross-build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu nasm uuid-dev python3-distutils
+      - name: Checkout EDK2
+        run: |
+          git clone --depth 1 https://github.com/tianocore/edk2.git edk2
+          cd edk2
+          git submodule update --init --recursive
+      - name: Build research UEFI app for AARCH64
+        shell: bash
+        run: |
+          set -euo pipefail
+          export WORKSPACE="$GITHUB_WORKSPACE/edk2"
+          export PACKAGES_PATH="$WORKSPACE:$GITHUB_WORKSPACE/project"
+          export GCC5_AARCH64_PREFIX=aarch64-linux-gnu-
+          cd "$WORKSPACE"
+          make -C BaseTools -j2
+          source edksetup.sh
+          build -a AARCH64 -t GCC5 -b DEBUG -p ArmVirtPkg/ArmVirtQemu.dsc -m uefi/RmpResearchApp/RmpResearchApp.inf
+          find Build -name 'RmpResearchApp.efi' -print -exec cp '{}' "$GITHUB_WORKSPACE/RmpResearchApp.efi" \;
+          test -s "$GITHUB_WORKSPACE/RmpResearchApp.efi"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ARM64-UEFI-research-app-NOT-FLASHABLE
+          path: RmpResearchApp.efi
