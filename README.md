@@ -1,6 +1,6 @@
 # RealmePad-Windows-ARM
 
-Experimental research project for **realme Pad 10.4 LTE (RMP2103)** and possible Windows on ARM support.
+Experimental research project for **realme Pad 10.4 LTE (RMP2102) and Wi-Fi (RMP2103)** and possible Windows on ARM support.
 
 **Current status: research only. No working Windows boot, UEFI port, drivers or installer.**
 
