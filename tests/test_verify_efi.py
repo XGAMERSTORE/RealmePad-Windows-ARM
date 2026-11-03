@@ -8,7 +8,7 @@ def fixture(machine=0xaa64, subsystem=10, magic=0x20b):
     struct.pack_into("<I", data, 0x3c, 0x80)
     data[0x80:0x84] = b"PE\0\0"
     struct.pack_into("<H", data, 0x84, machine)
-    struct.pack_into("<H", data, 0x80 + 20, 112)
+    struct.pack_into("<H", data, 0x80 + 20, 88)
     struct.pack_into("<H", data, 0x98, magic)
     struct.pack_into("<H", data, 0x98 + 68, subsystem)
     return bytes(data)
