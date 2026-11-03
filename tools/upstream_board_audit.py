@@ -23,7 +23,7 @@ def audit():
     for name, (repo, branch, path) in SOURCES.items():
         content, url = read_source(repo, branch, path)
         lines = content.splitlines()
-        matches = {key: [line.strip() for line in lines if re.match(r"^\\s*" + re.escape(key) + r"\\s*[:?+]?=", line)] for key in PATTERNS[name]}
+        matches = {key: [line.strip() for line in lines if re.match(r"^\s*" + re.escape(key) + r"\s*[:?+]?=", line)] for key in PATTERNS[name]}
         result["sources"][name] = {"url": url, "matched_properties": matches}
     return result
 if __name__ == "__main__":
