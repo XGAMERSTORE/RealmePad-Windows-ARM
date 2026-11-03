@@ -1,0 +1,35 @@
+import json
+import struct
+import unittest
+from pathlib import Path
+from tools.compare_boot_layout import compare
+
+BOARD = json.loads((Path(__file__).resolve().parents[1] / "research/upstream-boardconfig.json").read_text())
+
+class BootLayoutTests(unittest.TestCase):
+    def header(self, offset=0):
+        data = bytearray(1660)
+        data[:8] = b"ANDROID!"
+        boot = BOARD["android_boot"]
+        base = int(boot["kernel_base"], 16)
+        for position, key in ((12, "kernel_offset"), (20, "ramdisk_offset"), (32, "tags_offset")):
+            struct.pack_into("<I", data, position, base + int(boot[key], 16) + offset)
+        struct.pack_into("<I", data, 36, boot["page_size"])
+        struct.pack_into("<I", data, 40, boot["header_version"])
+        return data
+
+    def test_expected_layout(self):
+        result = compare(self.header(), BOARD)
+        self.assertTrue(result["matches_upstream_config"])
+        self.assertFalse(result["windows_boot_ready"])
+        self.assertFalse(result["safe_to_flash"])
+
+    def test_mismatched_layout(self):
+        self.assertFalse(compare(self.header(4096), BOARD)["matches_upstream_config"])
+
+    def test_truncated(self):
+        with self.assertRaises(ValueError):
+            compare(b"ANDROID!", BOARD)
+
+if __name__ == "__main__":
+    unittest.main()
