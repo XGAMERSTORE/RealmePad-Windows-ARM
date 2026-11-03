@@ -7,6 +7,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Guid/Acpi.h>
+#include <Library/BaseLib.h>
 
 EFI_STATUS
 EFIAPI
