@@ -1,6 +1,11 @@
-name: ARM64 UEFI app build (emulator only)
+name: ARM64 UEFI app build (host research only)
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'uefi/**'
+      - '.github/workflows/uefi-emulator.yml'
+  pull_request:
 permissions:
   contents: read
 jobs:
@@ -10,16 +15,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: project
-      - name: Install cross-build dependencies
+      - name: Install cross-compiler and build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu nasm uuid-dev python3-distutils
-      - name: Checkout EDK2
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu make uuid-dev nasm python3
+      - name: Fetch pinned EDK2 release
         run: |
-          git clone --depth 1 https://github.com/tianocore/edk2.git edk2
+          git clone --depth 1 --branch edk2-stable202508 https://github.com/tianocore/edk2.git edk2
           cd edk2
           git submodule update --init --recursive
-      - name: Build research UEFI app for AARCH64
+      - name: Compile AARCH64 UEFI app
         shell: bash
         run: |
           set -euo pipefail
@@ -29,10 +34,15 @@ jobs:
           cd "$WORKSPACE"
           make -C BaseTools -j2
           source edksetup.sh
-          build -a AARCH64 -t GCC5 -b DEBUG -p ArmVirtPkg/ArmVirtQemu.dsc -m uefi/RmpResearchApp/RmpResearchApp.inf
-          find Build -name 'RmpResearchApp.efi' -print -exec cp '{}' "$GITHUB_WORKSPACE/RmpResearchApp.efi" \;
+          build -a AARCH64 -t GCC5 -b DEBUG -p uefi/RmpResearchHost.dsc
+          find Build/RmpResearchHost -type f -name 'RmpResearchApp.efi' -print -quit | grep -q .
+          find Build/RmpResearchHost -type f -name 'RmpResearchApp.efi' -print -quit | xargs -r -I '{}' cp '{}' "$GITHUB_WORKSPACE/RmpResearchApp.efi"
           test -s "$GITHUB_WORKSPACE/RmpResearchApp.efi"
+          file "$GITHUB_WORKSPACE/RmpResearchApp.efi"
+          sha256sum "$GITHUB_WORKSPACE/RmpResearchApp.efi" > "$GITHUB_WORKSPACE/RmpResearchApp.sha256"
       - uses: actions/upload-artifact@v4
         with:
-          name: ARM64-UEFI-research-app-NOT-FLASHABLE
-          path: RmpResearchApp.efi
+          name: AARCH64-UEFI-APP-NOT-TABLET-FIRMWARE
+          path: |
+            RmpResearchApp.efi
+            RmpResearchApp.sha256
