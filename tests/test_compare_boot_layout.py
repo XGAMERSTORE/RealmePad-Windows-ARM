@@ -35,6 +35,22 @@ class BootLayoutTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "Unsupported Android boot header"):
                     compare(data, BOARD)
 
+    def test_rejects_truncated_v2(self):
+        with self.assertRaises(ValueError):
+            compare(self.header()[:1659], BOARD)
+
+    def test_rejects_unsupported_version(self):
+        header = self.header()
+        struct.pack_into("<I", header, 40, 0xffffffff)
+        with self.assertRaises(ValueError):
+            compare(header, BOARD)
+
+    def test_rejects_truncated_v1(self):
+        header = self.header()
+        struct.pack_into("<I", header, 40, 1)
+        with self.assertRaises(ValueError):
+            compare(header[:1647], BOARD)
+
     def test_truncated(self):
         with self.assertRaises(ValueError):
             compare(b"ANDROID!", BOARD)
