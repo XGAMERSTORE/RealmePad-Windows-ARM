@@ -1,0 +1,20 @@
+## @file
+#  ARM64 UEFI research application, not device firmware.
+##
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = RmpResearchApp
+  FILE_GUID                      = 4c0a3d82-a7c2-4c4a-a7c9-1f1b4e24c1a1
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 0.1
+  ENTRY_POINT                    = UefiMain
+
+[Sources]
+  RmpResearchApp.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiLib
