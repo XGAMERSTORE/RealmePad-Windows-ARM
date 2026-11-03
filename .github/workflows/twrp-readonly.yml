@@ -1,0 +1,24 @@
+name: Build read-only TWRP compatibility checker
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'recovery/twrp-check/**'
+      - 'tools/package_twrp_check.py'
+      - '.github/workflows/twrp-readonly.yml'
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package TWRP read-only checker
+        run: python3 tools/package_twrp_check.py
+      - name: Assert no partition-writing commands
+        run: |
+          ! grep -Ein '\b(dd|flash_image|fastboot|mkfs|mount|umount|blockdev)\b|/dev/block|write_raw_image' recovery/twrp-check/META-INF/com/google/android/update-binary
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RMP6768-TWRP-READONLY-CHECK-NOT-WINDOWS
+          path: dist/RMP6768-TWRP-READONLY-CHECK.zip
