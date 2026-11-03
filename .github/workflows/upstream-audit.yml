@@ -1,0 +1,34 @@
+name: Upstream RMP6768 board audit
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/upstream_board_audit.py'
+      - '.github/workflows/upstream-audit.yml'
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Syntax check
+        run: python -m py_compile tools/upstream_board_audit.py
+      - name: Audit upstream board config
+        run: python tools/upstream_board_audit.py > rmp6768-upstream-audit.json
+      - name: Validate report structure
+        run: |
+          python - <<'PY'
+          import json
+          with open('rmp6768-upstream-audit.json') as f: report=json.load(f)
+          assert report['board']=='RMP6768'
+          assert 'kernel_build' in report['sources']
+          assert 'board_config' in report['sources']
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rmp6768-upstream-audit
+          path: rmp6768-upstream-audit.json
