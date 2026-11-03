@@ -1,0 +1,30 @@
+name: Board research validation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate Python syntax
+        run: python -m compileall -q tools
+      - name: Generate board manifest
+        run: python tools/board_manifest.py > board-manifest.json
+      - name: Check non-flashable flag
+        run: |
+          python - <<'PY'
+          import json
+          b=json.load(open('board-manifest.json'))
+          assert b['safe_to_flash'] is False
+          assert b['models']['RMP2102']=='LTE'
+          assert b['models']['RMP2103']=='Wi-Fi'
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: board-research-manifest
+          path: board-manifest.json
