@@ -20,6 +20,7 @@
   UefiLib
   UefiBootServicesTableLib
   MemoryAllocationLib
+  BaseLib
 
 [Guids]
   gEfiAcpi20TableGuid
