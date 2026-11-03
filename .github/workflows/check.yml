@@ -1,0 +1,17 @@
+name: Static checks
+on:
+  push:
+  pull_request:
+jobs:
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Bash syntax
+        run: bash -n scripts/inventory.sh
+      - name: Ensure no flash commands in inventory scripts
+        run: |
+          if grep -Ein '(^|[[:space:]])(fastboot[[:space:]]+(flash|erase|flashing)|adb[[:space:]]+reboot[[:space:]]+bootloader|dd[[:space:]]+if=)' scripts/inventory.sh scripts/inventory.ps1; then
+            echo "Potentially destructive command detected"
+            exit 1
+          fi
