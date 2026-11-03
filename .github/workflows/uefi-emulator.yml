@@ -24,7 +24,9 @@ jobs:
           git clone --depth 1 --branch edk2-stable202508 https://github.com/tianocore/edk2.git edk2
           cd edk2
           git submodule update --init --recursive
-      - name: Test EFI verifier\n        run: python3 -m unittest discover -s project/tests -p 'test_verify_efi.py' -v\n      - name: Compile AARCH64 UEFI app
+      - name: Test EFI verifier
+        run: python3 -m unittest discover -s project/tests -p 'test_verify_efi.py' -v
+      - name: Compile AARCH64 UEFI app
         shell: bash
         run: |
           set -euo pipefail
@@ -38,11 +40,13 @@ jobs:
           find Build/RmpResearchHost -type f -name 'RmpResearchApp.efi' -print -quit | grep -q .
           find Build/RmpResearchHost -type f -name 'RmpResearchApp.efi' -print -quit | xargs -r -I '{}' cp '{}' "$GITHUB_WORKSPACE/RmpResearchApp.efi"
           test -s "$GITHUB_WORKSPACE/RmpResearchApp.efi"
-          file "$GITHUB_WORKSPACE/RmpResearchApp.efi"\n          PYTHONPATH="$GITHUB_WORKSPACE/project" python3 "$GITHUB_WORKSPACE/project/tools/verify_efi.py" "$GITHUB_WORKSPACE/RmpResearchApp.efi" > "$GITHUB_WORKSPACE/efi-verification.json"
+          file "$GITHUB_WORKSPACE/RmpResearchApp.efi"
+          PYTHONPATH="$GITHUB_WORKSPACE/project" python3 "$GITHUB_WORKSPACE/project/tools/verify_efi.py" "$GITHUB_WORKSPACE/RmpResearchApp.efi" > "$GITHUB_WORKSPACE/efi-verification.json"
           sha256sum "$GITHUB_WORKSPACE/RmpResearchApp.efi" > "$GITHUB_WORKSPACE/RmpResearchApp.sha256"
       - uses: actions/upload-artifact@v4
         with:
           name: AARCH64-UEFI-APP-NOT-TABLET-FIRMWARE
           path: |
             RmpResearchApp.efi
-            RmpResearchApp.sha256\n            efi-verification.json
+            RmpResearchApp.sha256
+            efi-verification.json
