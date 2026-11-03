@@ -15,6 +15,8 @@ def compare(header, board):
     version = struct.unpack_from("<I", header, 40)[0]
     if version not in (0, 1, 2):
         raise ValueError("Unsupported Android boot header version (v3+ uses a different layout)")
+    if version == 0 and len(header) < 1632:
+        raise ValueError("Truncated v0 Android boot header")
     if version == 1 and len(header) < 1648:
         raise ValueError("Truncated v1 Android boot header")
     if version == 2 and len(header) < 1660:
