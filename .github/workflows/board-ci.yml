@@ -1,0 +1,23 @@
+name: RMP6768 offline board checks
+on:
+  push:
+    paths:
+      - 'tools/board_manifest.py'
+      - 'tools/validate_board.py'
+      - '.github/workflows/board-ci.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  board:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile scripts
+        run: python -m compileall -q tools
+      - name: Validate board model mapping and safety
+        run: python tools/validate_board.py
