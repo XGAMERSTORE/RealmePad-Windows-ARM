@@ -1,0 +1,28 @@
+name: Offline inventory contract
+
+on:
+  push:
+    paths:
+      - "scripts/inventory.sh"
+      - "tests/test_inventory_*.py"
+      - ".github/workflows/offline-inventory-contract.yml"
+  pull_request:
+    paths:
+      - "scripts/inventory.sh"
+      - "tests/test_inventory_*.py"
+      - ".github/workflows/offline-inventory-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Bash syntax
+        run: bash -n scripts/inventory.sh
+      - name: Run mocked ADB inventory regression tests (no hardware)
+        run: python3 -m unittest discover -s tests -p 'test_inventory_*.py' -v
