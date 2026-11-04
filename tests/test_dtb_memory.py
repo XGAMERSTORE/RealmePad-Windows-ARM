@@ -59,3 +59,21 @@ class DtbTests(unittest.TestCase):
 
     def test_invalid(self):
         with self.assertRaises(ValueError): inspect(b"invalid")
+
+    def test_zero_length_ram_rejected(self):
+        blob = bytearray(dtb())
+        signature = struct.pack(">4I", 0, 0x40000000, 0, 0x80000000)
+        index = blob.find(signature)
+        self.assertGreaterEqual(index, 0)
+        struct.pack_into(">I", blob, index + 12, 0)
+        with self.assertRaisesRegex(ValueError, "invalid RAM range"):
+            inspect(bytes(blob))
+
+    def test_overflowing_ram_range_rejected(self):
+        blob = bytearray(dtb())
+        signature = struct.pack(">4I", 0, 0x40000000, 0, 0x80000000)
+        index = blob.find(signature)
+        self.assertGreaterEqual(index, 0)
+        struct.pack_into(">4I", blob, index, 0xffffffff, 0xfffffff0, 0, 0x100)
+        with self.assertRaisesRegex(ValueError, "invalid RAM range"):
+            inspect(bytes(blob))
