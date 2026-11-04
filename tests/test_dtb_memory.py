@@ -20,5 +20,17 @@ class DtbTests(unittest.TestCase):
         self.assertIn(("compatible","realme,rmp6768"),inspect(dtb()))
     def test_truncated(self):
         with self.assertRaises(ValueError): inspect(dtb()[:-1])
+    def test_header_overlapping_blocks(self):
+        blob = bytearray(dtb())
+        struct.pack_into(">I", blob, 8, 0)
+        with self.assertRaises(ValueError): inspect(bytes(blob))
+
+    def test_memory_controller_is_not_ram(self):
+        blob = dtb()
+        self.assertTrue(any(k == "RAM" for k, _ in inspect(blob)))
+        # The parser must not infer RAM from memory-controller nodes.
+        modified = blob.replace(b"memory@40000000", b"memory-controller")
+        self.assertFalse(any(k == "RAM" for k, _ in inspect(modified)))
+
     def test_invalid(self):
         with self.assertRaises(ValueError): inspect(b"invalid")
