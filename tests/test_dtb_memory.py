@@ -39,5 +39,23 @@ class DtbTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "overlap"):
             inspect(bytes(blob))
 
+
+    def test_fdt_end_requires_closed_nodes(self):
+        blob = bytearray(dtb())
+        offset = struct.unpack_from(">I", blob, 8)[0]
+        size = struct.unpack_from(">I", blob, 36)[0]
+        # Replace the final FDT_END_NODE with FDT_END, leaving root open.
+        struct.pack_into(">I", blob, offset + size - 8, 9)
+        with self.assertRaisesRegex(ValueError, "closing all nodes"):
+            inspect(bytes(blob))
+
+    def test_properties_outside_nodes_rejected(self):
+        blob = bytearray(dtb())
+        offset = struct.unpack_from(">I", blob, 8)[0]
+        # FDT_PROP token before the first FDT_BEGIN_NODE.
+        struct.pack_into(">I", blob, offset, 3)
+        with self.assertRaises(ValueError):
+            inspect(bytes(blob))
+
     def test_invalid(self):
         with self.assertRaises(ValueError): inspect(b"invalid")
