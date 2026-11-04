@@ -20,8 +20,8 @@ EFI_STATUS EFIAPI UefiMain(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *Syste
   EFI_HANDLE Child = NULL;
   EFI_DEVICE_PATH_PROTOCOL *Path = NULL;
   EFI_HANDLE Device;
-  // The standard Windows ARM64 removable-media loader path.
-  CONST CHAR16 *WindowsLoader = L"\\EFI\\BOOT\\BOOTAA64.EFI";
+  // Avoid loading our own fallback path recursively.
+  CONST CHAR16 *WindowsLoader = L"\\EFI\\Microsoft\\Boot\\bootmgfw.efi";
 
   Status = gBS->HandleProtocol(ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **)&Loaded);
   if (EFI_ERROR(Status) || Loaded == NULL) {
