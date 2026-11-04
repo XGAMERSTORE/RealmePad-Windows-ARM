@@ -29,7 +29,7 @@ class DtbTests(unittest.TestCase):
         blob = dtb()
         self.assertTrue(any(k == "RAM" for k, _ in inspect(blob)))
         # The parser must not infer RAM from memory-controller nodes.
-        modified = blob.replace(b"memory@40000000", b"memory-controller")
+        modified = blob.replace(b"memory@40000000", b"memory-ctrl0000")
         self.assertFalse(any(k == "RAM" for k, _ in inspect(modified)))
 
     def test_invalid(self):
