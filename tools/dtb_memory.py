@@ -13,7 +13,7 @@ def inspect(blob):
     magic, total, os, ot, _, _, _, _, ns, nb = struct.unpack_from(">10I", blob)
     if magic != 0xd00dfeed or total > len(blob) or total < 40:
         raise ValueError("invalid FDT header")
-    if os + nb > total or ot + ns > total:
+    if os < 40 or ot < 40 or os + nb > total or ot + ns > total:
         raise ValueError("FDT block outside file")
     block, names = blob[os:os+nb], blob[ot:ot+ns]
     pos, stack, ac, sc, found = 0, [], [2], [1], []
@@ -43,7 +43,7 @@ def inspect(blob):
             if key == "#size-cells" and size == 4: sc[-1] = int.from_bytes(value, "big")
             if key == "compatible":
                 found.append(("compatible", value.rstrip(b"\0").replace(b"\0", b", ").decode("ascii", "replace")))
-            if key == "reg" and stack and stack[-1].startswith("memory"):
+            if key == "reg" and stack and (stack[-1] == "memory" or stack[-1].startswith("memory@")):
                 a, s = ac[-2], sc[-2]
                 if a not in (1, 2) or s not in (1, 2) or len(value) % (4*(a+s)):
                     raise ValueError("unsupported RAM reg encoding")
