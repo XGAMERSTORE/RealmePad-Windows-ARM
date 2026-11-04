@@ -1,0 +1,26 @@
+## @file
+# UEFI Windows ARM64 loader chainloader. Not a firmware image.
+##
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = WindowsBoot
+  FILE_GUID                      = 6a891ba5-391a-4bc9-bf93-f987a7316500
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 0.1
+  ENTRY_POINT                    = UefiMain
+
+[Sources]
+  WindowsBoot.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiLib
+  UefiBootServicesTableLib
+  DevicePathLib
+  MemoryAllocationLib
+
+[Protocols]
+  gEfiLoadedImageProtocolGuid
