@@ -41,5 +41,42 @@ class InventoryTests(unittest.TestCase):
             self.assertIn("partition names (metadata only):", result.stdout.lower())
 
 
+    def test_adb_disconnected_fails_before_property_reads(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mock = pathlib.Path(directory) / "adb"
+            log = pathlib.Path(directory) / "commands.txt"
+            mock.write_text(
+                '#!/bin/sh\n'
+                'printf "%s\\n" "$*" >> "$ADB_TEST_LOG"\n'
+                'if [ "$*" = "get-state" ]; then echo offline >&2; exit 1; fi\n'
+                'exit 42\n'
+            )
+            mock.chmod(0o755)
+            env = dict(os.environ, PATH=directory + os.pathsep + os.environ["PATH"], ADB_TEST_LOG=str(log))
+            result = subprocess.run(["bash", str(SCRIPT)], env=env, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(log.read_text().splitlines(), ["get-state"])
+            self.assertNotIn("Read-only system properties", result.stdout)
+
+    def test_failed_property_read_stops_inventory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mock = pathlib.Path(directory) / "adb"
+            log = pathlib.Path(directory) / "commands.txt"
+            mock.write_text(
+                '#!/bin/sh\n'
+                'printf "%s\\n" "$*" >> "$ADB_TEST_LOG"\n'
+                'case "$*" in\n'
+                '  "get-state") echo device ;;\n'
+                '  "shell getprop ro.product.model") exit 23 ;;\n'
+                '  *) exit 42 ;;\n'
+                'esac\n'
+            )
+            mock.chmod(0o755)
+            env = dict(os.environ, PATH=directory + os.pathsep + os.environ["PATH"], ADB_TEST_LOG=str(log))
+            result = subprocess.run(["bash", str(SCRIPT)], env=env, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(log.read_text().splitlines(), ["get-state", "shell getprop ro.product.model"])
+            self.assertNotIn("Kernel:", result.stdout)
+
 if __name__ == "__main__":
     unittest.main()
