@@ -1,0 +1,65 @@
+name: MT6768 upstream U-Boot build feasibility
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/mt6768-uboot-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-mt6768:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Install ARM64 cross compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu make bc bison flex             libssl-dev libgnutls28-dev libncurses-dev python3-dev swig
+
+      - name: Fetch MT6768 upstream
+        run: |
+          git clone https://github.com/mt6768-mainline/u-boot.git u-boot
+          git -C u-boot rev-parse HEAD | tee upstream-commit.txt
+
+      - name: Check board port prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd u-boot
+          missing=0
+          for path in configs/mt6768_defconfig board/mediatek/mt6768/Makefile; do
+            if [[ ! -f "$path" ]]; then
+              echo "::error::Missing upstream MT6768 board support: $path"
+              missing=1
+            fi
+          done
+          if (( missing )); then
+            echo "::error::Upstream MT6768 cannot be built as a board target without additional port files."
+            exit 1
+          fi
+
+      - name: Cross-compile U-Boot
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd u-boot
+          make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- mt6768_defconfig
+          make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j2
+          test -s u-boot.bin
+          sha256sum u-boot.bin > u-boot.bin.sha256
+
+      - name: Upload non-flashable research binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: mt6768-upstream-research-NOT-REALME-PAD
+          path: |
+            u-boot/u-boot.bin
+            u-boot/u-boot.bin.sha256
+            upstream-commit.txt
+          if-no-files-found: error
+
+# Never flash outputs to RMP2102 or RMP2103. Even a successful upstream
+# build does not establish correct board support, LK handoff, or recovery.
