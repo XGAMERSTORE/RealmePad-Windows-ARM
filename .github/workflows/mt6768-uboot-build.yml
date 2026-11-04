@@ -35,7 +35,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git -C u-boot am "$PWD"/notes/uboot-patches/00*.patch
+          git -C u-boot -c user.name="MT6768 CI Patch Applicator" -c user.email="mt6768-ci@users.noreply.github.com" am "$PWD"/notes/uboot-patches/00*.patch
           test -f u-boot/configs/mt6768_defconfig
           test -f u-boot/board/mediatek/mt6768/Makefile
           git -C u-boot log -3 --oneline
