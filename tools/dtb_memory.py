@@ -56,6 +56,8 @@ def inspect(blob):
                     base = length = 0
                     for c in cells[:a]: base = (base << 32) | c
                     for c in cells[a:]: length = (length << 32) | c
+                    if length == 0 or base + length > (1 << 64):
+                        raise ValueError("invalid RAM range: empty or exceeds 64-bit physical address space")
                     found.append(("RAM", f"base=0x{base:x} size=0x{length:x}"))
         elif token == 4:
             continue
