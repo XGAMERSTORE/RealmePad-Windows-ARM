@@ -21,3 +21,29 @@ Checked 2026-11-04. This ledger records what publicly visible sources actually e
 - Do not infer the presence of UEFI from a PE/COFF EFI artifact or from Android boot image headers.
 - Do not rely on unofficial tutorials to decide which variant has LTE: use exact-device read-only properties and manufacturer evidence. Track the two models separately.
 - Do not unlock, flash, bypass verified boot, erase, or distribute proprietary firmware to fill these evidence gaps.
+
+## Additional cross-checks (2026-11-04)
+
+- [mtk-mainline MT6768/MT6769 project](https://gitlab.com/mtk-mainline/mt6768)
+  researches Linux support for this SoC family; it is **not** a tested Realme Pad
+  EDK II implementation or a Windows driver set.
+- [Realme Pad recovery tree](https://github.com/Realme-Pad-Dev/android_recovery_realme_RMP6768)
+  is evidence of Android recovery support, not a UEFI execution handoff.
+- [RMP2103 third-party service log](https://forum.gsmhosting.com/vbb/f296/realme-rmp2103-firmware-read-ok-3313174/)
+  reports secure boot and download-agent authentication. This is an unverified
+  external log, **not** proof of a safe unsigned payload path.
+
+**SoC nomenclature caution:** Helio G80 is publicly described as
+MT6769V/CU; MT6768/MT6769 also names the related bootchain family. Do not
+assume that a payload for a different MT6768 board can run on this tablet.
+
+**Nearest firmware blocker:** no demonstrated, recoverable handoff from
+Realme's authenticated bootchain to an arbitrary AArch64 UEFI payload on
+either model. Before an on-device test, require evidence of the accepted
+image format, signing policy, exception level, entry address, DRAM/reserved
+memory map, and an independently validated model-specific recovery path.
+None of those values should be guessed from another MediaTek board.
+
+**Artifact boundary:** `uefi/WindowsBoot` is only an EDK II UEFI application
+that requires existing working UEFI. Even a successful host build cannot
+be described as a complete firmware port or proof of Windows boot.
