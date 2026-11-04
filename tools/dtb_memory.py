@@ -20,7 +20,7 @@ def inspect(blob):
     if max(os, ot) < min(os + nb, ot + ns):
         raise ValueError("FDT structure and strings blocks overlap")
     block, names = blob[os:os+nb], blob[ot:ot+ns]
-    pos, stack, ac, sc, found = 0, [], [2], [1], []
+    pos, stack, ac, sc, found, ram_ranges = 0, [], [2], [1], [], []
     while pos + 4 <= len(block):
         token, = struct.unpack_from(">I", block, pos)
         pos += 4
@@ -58,6 +58,10 @@ def inspect(blob):
                     for c in cells[a:]: length = (length << 32) | c
                     if length == 0 or base + length > (1 << 64):
                         raise ValueError("invalid RAM range: empty or exceeds 64-bit physical address space")
+                    for old_base, old_end in ram_ranges:
+                        if base < old_end and old_base < base + length:
+                            raise ValueError("overlapping RAM ranges")
+                    ram_ranges.append((base, base + length))
                     found.append(("RAM", f"base=0x{base:x} size=0x{length:x}"))
         elif token == 4:
             continue
