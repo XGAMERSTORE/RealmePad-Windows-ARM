@@ -1,0 +1,26 @@
+name: DTB memory-map parser tests
+on:
+  push:
+    paths:
+      - 'tools/dtb_memory.py'
+      - 'tests/test_dtb_memory.py'
+      - '.github/workflows/dtb-memory-tests.yml'
+  pull_request:
+    paths:
+      - 'tools/dtb_memory.py'
+      - 'tests/test_dtb_memory.py'
+      - '.github/workflows/dtb-memory-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dtb-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_dtb_memory.py' -v
