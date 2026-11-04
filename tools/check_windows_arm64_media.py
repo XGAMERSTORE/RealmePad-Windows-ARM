@@ -25,7 +25,7 @@ def inspect(root: Path) -> list[str]:
                 errors.append("EFI loader header is truncated.")
             else:
                 pe_offset = int.from_bytes(header[0x3c:0x40], "little")
-                if pe_offset > len(header) - 26 or header[pe_offset:pe_offset+4] != b"PE\\0\\0":
+                if pe_offset > len(header) - 26 or header[pe_offset:pe_offset+4] != b"PE\x00\x00":
                     errors.append("EFI loader has no valid PE signature in first 4096 bytes.")
                 elif int.from_bytes(header[pe_offset+4:pe_offset+6], "little") != 0xAA64:
                     errors.append("EFI loader PE machine is not ARM64 (0xAA64).")
