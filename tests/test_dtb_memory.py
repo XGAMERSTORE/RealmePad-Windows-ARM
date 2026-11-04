@@ -32,5 +32,12 @@ class DtbTests(unittest.TestCase):
         modified = blob.replace(b"memory@40000000", b"memory-ctrl0000")
         self.assertFalse(any(k == "RAM" for k, _ in inspect(modified)))
 
+    def test_overlapping_fdt_blocks(self):
+        blob = bytearray(dtb())
+        # Place strings block inside the structure block.
+        struct.pack_into(">I", blob, 12, 60)
+        with self.assertRaisesRegex(ValueError, "overlap"):
+            inspect(bytes(blob))
+
     def test_invalid(self):
         with self.assertRaises(ValueError): inspect(b"invalid")
