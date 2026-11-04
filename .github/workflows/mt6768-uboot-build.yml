@@ -27,6 +27,8 @@ jobs:
           git clone https://github.com/mt6768-mainline/u-boot.git u-boot
           git -C u-boot checkout --detach 0f587c97b74dbc161769a82b63249948eb15e143
           git clone https://github.com/hataketsu/mt6768-mainline-notes.git notes
+          git -C notes checkout --detach 5db190b4570eb0276b52d652d914bd73fcdd8319
+          test "$(git -C notes rev-parse HEAD)" = 5db190b4570eb0276b52d652d914bd73fcdd8319
           git -C notes rev-parse HEAD > notes-commit.txt
           git -C u-boot rev-parse HEAD > upstream-commit.txt
           test "$(find notes/uboot-patches -maxdepth 1 -name '00*.patch' | wc -l)" -eq 3
