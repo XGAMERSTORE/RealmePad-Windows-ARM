@@ -1,0 +1,56 @@
+name: Build ARM64 EDK II reference firmware (QEMU only)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/edk2-arm64-reference.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/edk2-arm64-reference.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  edk2-armvirt:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-aarch64-linux-gnu             python3 python3-pip nasm uuid-dev acpica-tools git
+
+      - name: Clone upstream EDK II with submodules
+        run: |
+          git clone --depth 1 https://github.com/tianocore/edk2.git edk2
+          cd edk2
+          git submodule update --init --depth 1
+
+      - name: Build ARM64 QEMU reference UEFI firmware
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd edk2
+          export GCC5_AARCH64_PREFIX=aarch64-linux-gnu-
+          make -C BaseTools
+          source edksetup.sh
+          build -a AARCH64 -t GCC5 -b RELEASE -p ArmVirtPkg/ArmVirtQemu.dsc
+          test -s Build/ArmVirtQemu-AARCH64/RELEASE_GCC5/FV/QEMU_EFI.fd
+          sha256sum Build/ArmVirtQemu-AARCH64/RELEASE_GCC5/FV/QEMU_EFI.fd > QEMU_EFI.fd.sha256
+
+      - name: Upload QEMU-only firmware and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: edk2-arm64-qemu-reference-NOT-REALME-PAD
+          path: |
+            edk2/Build/ArmVirtQemu-AARCH64/RELEASE_GCC5/FV/QEMU_EFI.fd
+            edk2/QEMU_EFI.fd.sha256
+          if-no-files-found: error
+
+# IMPORTANT: This builds upstream ArmVirtPkg firmware for the QEMU virt machine.
+# It is NOT MT6768/RMP2102/RMP2103 firmware. Never flash it to Realme Pad.
