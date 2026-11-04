@@ -47,12 +47,7 @@ jobs:
           make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- mt6768_defconfig
           make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j2
           test -s u-boot/u-boot.bin
-          python3 - <<'PY'
-          from pathlib import Path
-          image = Path('u-boot/u-boot.bin').read_bytes()
-          assert image[56:60] == b'ARM\x64', 'Missing ARM64 Linux image header magic'
-          print(f'Patched MT6768 reference build: {len(image)} bytes, ARM64 header OK')
-          PY
+          python3 -c "from pathlib import Path; p=Path('u-boot/u-boot.bin'); b=p.read_bytes(); assert b[56:60] == bytes.fromhex('41524d64'), 'Missing ARM64 Linux image header magic'; print('Patched MT6768 reference build:', len(b), 'bytes, ARM64 header OK')"
           sha256sum u-boot/u-boot.bin > u-boot.bin.sha256
 
       - name: Publish research-only artifact and source revisions
