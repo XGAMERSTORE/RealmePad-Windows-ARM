@@ -77,3 +77,25 @@ class DtbTests(unittest.TestCase):
         struct.pack_into(">4I", blob, index, 0xffffffff, 0xfffffff0, 0, 0x100)
         with self.assertRaisesRegex(ValueError, "invalid RAM range"):
             inspect(bytes(blob))
+
+
+    def test_overlapping_ram_banks_rejected(self):
+        blob = bytearray(dtb())
+        structure_offset = struct.unpack_from(">I", blob, 8)[0]
+        structure_size = struct.unpack_from(">I", blob, 36)[0]
+        # Insert a second memory node immediately before root's END_NODE.
+        def u(n):
+            return struct.pack(">I", n)
+        def pad(data):
+            return data + b"\0" * ((-len(data)) % 4)
+        new_node = (u(1) + pad(b"memory@50000000\0") +
+                    u(3) + u(16) + u(27) +
+                    u(0) + u(0x50000000) + u(0) + u(0x10000000) +
+                    u(2))
+        insertion = structure_offset + structure_size - 8
+        blob[insertion:insertion] = new_node
+        struct.pack_into(">I", blob, 4, len(blob))
+        struct.pack_into(">I", blob, 12, struct.unpack_from(">I", blob, 12)[0] + len(new_node))
+        struct.pack_into(">I", blob, 36, structure_size + len(new_node))
+        with self.assertRaisesRegex(ValueError, "overlapping RAM"):
+            inspect(bytes(blob))
