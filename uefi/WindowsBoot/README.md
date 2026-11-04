@@ -1,7 +1,7 @@
 # Windows ARM64 UEFI boot-chain component
 
 This directory contains an **EDK II UEFI application**, not a complete UEFI
-firmware implementation. It loads `\\EFI\\BOOT\\BOOTAA64.EFI` from the same
+firmware implementation. It loads `\\EFI\\Microsoft\\Boot\\bootmgfw.efi` from the same
 EFI device as the application, then transfers control using UEFI LoadImage
 and StartImage. This is a genuine part of a UEFI boot flow, but it **cannot
 run on RMP2102/RMP2103 until a compatible UEFI firmware exists**.
