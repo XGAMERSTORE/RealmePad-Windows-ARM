@@ -15,6 +15,10 @@ def inspect(blob):
         raise ValueError("invalid FDT header")
     if os < 40 or ot < 40 or os + nb > total or ot + ns > total:
         raise ValueError("FDT block outside file")
+    # Both blocks must be disjoint. Overlap would allow malformed input to
+    # masquerade as valid node/property data and produce misleading RAM maps.
+    if max(os, ot) < min(os + nb, ot + ns):
+        raise ValueError("FDT structure and strings blocks overlap")
     block, names = blob[os:os+nb], blob[ot:ot+ns]
     pos, stack, ac, sc, found = 0, [], [2], [1], []
     while pos + 4 <= len(block):
