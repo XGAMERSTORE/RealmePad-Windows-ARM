@@ -36,7 +36,7 @@ def inspect(blob):
         elif token == 3:
             if pos + 8 > len(block): raise ValueError("truncated property")
             size, noff = struct.unpack_from(">II", block, pos); pos += 8
-            if noff >= len(names) or pos + size > len(block):
+            if not stack or noff >= len(names) or pos + size > len(block):
                 raise ValueError("invalid property")
             end = names.find(b"\0", noff)
             if end < 0: raise ValueError("unterminated property name")
@@ -60,6 +60,10 @@ def inspect(blob):
         elif token == 4:
             continue
         elif token == 9:
+            if stack:
+                raise ValueError("FDT_END encountered before closing all nodes")
+            if pos != len(block):
+                raise ValueError("trailing data after FDT_END")
             return found
         else:
             raise ValueError(f"invalid FDT token {token}")
