@@ -28,6 +28,12 @@ def validate(dtb: pathlib.Path):
                             text=True, capture_output=True, check=False)
     if memory.returncode != 0 or any(int(v, 16) for v in memory.stdout.split()):
         raise ValueError("Experimental DTB must retain an unconfigured /memory placeholder")
+    # /memory is only a placeholder. Reject separately inherited memory@ banks
+    # rather than silently accepting an unverified physical DRAM layout.
+    root_nodes = subprocess.run(["fdtget", "-l", str(dtb), "/"],
+                                text=True, capture_output=True, check=True)
+    if any(node.startswith("memory@") for node in root_nodes.stdout.split()):
+        raise ValueError("Unverified memory@ bank in experimental DTB")
     if get_property(dtb, "/chosen", "bootargs") is not None:
         raise ValueError("Unexpected hard-coded boot arguments")
     # Check entire flattened tree, not only a guessed /framebuffer node.
