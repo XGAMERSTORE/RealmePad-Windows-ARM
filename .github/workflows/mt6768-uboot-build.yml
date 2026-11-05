@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - '.github/workflows/mt6768-uboot-build.yml'
+      - 'docs/REALME_PAD_HARDWARE_EVIDENCE.md'
 
 permissions:
   contents: read
