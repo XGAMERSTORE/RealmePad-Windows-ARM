@@ -32,6 +32,8 @@ def validate(dtb: pathlib.Path):
     # rather than silently accepting an unverified physical DRAM layout.
     root_nodes = subprocess.run(["fdtget", "-l", str(dtb), "/"],
                                 text=True, capture_output=True, check=True)
+    if "reserved-memory" in root_nodes.stdout.split():
+        raise ValueError("Unverified reserved-memory layout in experimental DTB")
     if any(node.startswith("memory@") for node in root_nodes.stdout.split()):
         raise ValueError("Unverified memory@ bank in experimental DTB")
     if get_property(dtb, "/chosen", "bootargs") is not None:
@@ -39,6 +41,8 @@ def validate(dtb: pathlib.Path):
     # Check entire flattened tree, not only a guessed /framebuffer node.
     dump = subprocess.run(["dtc", "-I", "dtb", "-O", "dts", str(dtb)],
                           capture_output=True, text=True, check=True)
+    if "/memreserve/" in dump.stdout:
+        raise ValueError("Unverified DTB memreserve entry")
     if "simple-framebuffer" in dump.stdout:
         raise ValueError("Unverified simple-framebuffer is enabled/present")
     if "0x7d9b0000" in dump.stdout.lower():
