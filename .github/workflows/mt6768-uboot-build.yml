@@ -43,6 +43,14 @@ jobs:
           test -f u-boot/board/mediatek/mt6768/Makefile
           git -C u-boot log -3 --oneline
 
+      - name: Record toolchain and verify patched board configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          aarch64-linux-gnu-gcc --version | head -n 1 | tee compiler-version.txt
+          test -f u-boot/arch/arm/dts/mt6768-generic.dts
+          grep -q 'CONFIG_TARGET_XIAOMI_LANCELOT=y' u-boot/configs/mt6768_defconfig || { echo 'Reference target changed: inspect before proceeding'; exit 1; }
+
       - name: Build patched MT6768 Redmi 9 reference (NOT Realme Pad)
         shell: bash
         run: |
@@ -52,6 +60,8 @@ jobs:
           test -s u-boot/u-boot.bin
           python3 -c "from pathlib import Path; p=Path('u-boot/u-boot.bin'); b=p.read_bytes(); assert b[56:60] == bytes.fromhex('41524d64'), 'Missing ARM64 Linux image header magic'; print('Patched MT6768 reference build:', len(b), 'bytes, ARM64 header OK')"
           sha256sum u-boot/u-boot.bin > u-boot.bin.sha256
+          cp u-boot/.config u-boot-reference.config
+          test -s u-boot-reference.config
 
       - name: Publish research-only artifact and source revisions
         uses: actions/upload-artifact@v4
@@ -62,6 +72,8 @@ jobs:
             u-boot.bin.sha256
             upstream-commit.txt
             notes-commit.txt
+            compiler-version.txt
+            u-boot-reference.config
           if-no-files-found: error
 
 # This compiles an independently published Redmi 9 (lancelot) reference port.
