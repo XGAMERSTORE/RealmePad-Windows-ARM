@@ -97,7 +97,12 @@ jobs:
           python3 tools/check_realme_pad_dtb.py realme-pad-experimental.dtb
           make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j2
           test -s u-boot/u-boot.bin
-          python3 tools/check_arm64_image.py u-boot/u-boot.bin
+          # u-boot.bin is a raw binary, NOT a Linux ARM64 Image with a 64-byte header.
+          # Validate the linked ELF architecture instead of misparsing the raw binary.
+          test -s u-boot/u-boot
+          aarch64-linux-gnu-readelf -h u-boot/u-boot > u-boot-elf-header.txt
+          grep -Eq 'Machine:[[:space:]]*AArch64' u-boot-elf-header.txt
+          grep -Eq 'Class:[[:space:]]*ELF64' u-boot-elf-header.txt
           sha256sum u-boot/u-boot.bin > u-boot.bin.sha256
           cp u-boot/.config u-boot-reference.config
           test -s u-boot-reference.config
@@ -109,6 +114,7 @@ jobs:
           name: mt6768-redmi9-reference-NOT-FOR-FLASHING
           path: |
             u-boot/u-boot.bin
+            u-boot-elf-header.txt
             u-boot.bin.sha256
             upstream-commit.txt
             patched-upstream-commit.txt
