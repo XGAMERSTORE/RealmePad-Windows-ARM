@@ -57,6 +57,16 @@ class RealmePadDtbTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "memory placeholder"):
             self.check()
 
+    def test_reject_empty_memory_reg(self):
+        self.memory = ""
+        with self.assertRaisesRegex(ValueError, "memory placeholder"):
+            self.check()
+
+    def test_reject_truncated_memory_reg(self):
+        self.memory = "0 0"
+        with self.assertRaisesRegex(ValueError, "memory placeholder"):
+            self.check()
+
     def test_reject_separate_memory_bank(self):
         self.root_nodes += "memory@40000000\n"
         with self.assertRaisesRegex(ValueError, "Unverified memory@ bank"):
