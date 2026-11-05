@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - '.github/workflows/mt6768-uboot-build.yml'
+      - 'tools/check_arm64_image.py'
       - 'docs/REALME_PAD_HARDWARE_EVIDENCE.md'
 
 permissions:
@@ -15,6 +16,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
+      - uses: actions/checkout@v4
       - name: Install ARM64 cross-build prerequisites
         run: |
           sudo apt-get update
@@ -58,7 +60,7 @@ jobs:
           make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- mt6768_defconfig
           make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j2
           test -s u-boot/u-boot.bin
-          python3 -c "from pathlib import Path; p=Path('u-boot/u-boot.bin'); b=p.read_bytes(); assert b[56:60] == bytes.fromhex('41524d64'), 'Missing ARM64 Linux image header magic'; print('Patched MT6768 reference build:', len(b), 'bytes, ARM64 header OK')"
+          python3 tools/check_arm64_image.py u-boot/u-boot.bin
           sha256sum u-boot/u-boot.bin > u-boot.bin.sha256
           cp u-boot/.config u-boot-reference.config
           test -s u-boot-reference.config
