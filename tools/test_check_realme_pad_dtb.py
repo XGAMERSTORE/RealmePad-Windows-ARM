@@ -14,10 +14,13 @@ class RealmePadDtbTests(unittest.TestCase):
             ("/", "compatible"): "realme,rmp6768 mediatek,mt6768",
         }
         self.memory = "0 0 0 0\n"
+        self.root_nodes = "chosen memory soc\n"
         self.dump = '/ { model = "realme Pad"; };'
 
     def run_fake(self, args, **kwargs):
         if args[0] == "fdtget":
+            if args[1] == "-l":
+                return subprocess.CompletedProcess(args, 0, self.root_nodes, "")
             if args[2] == "x":
                 return subprocess.CompletedProcess(args, 0, self.memory, "")
             value = self.props.get((args[4], args[5]))
@@ -52,6 +55,11 @@ class RealmePadDtbTests(unittest.TestCase):
     def test_reject_hardcoded_dram(self):
         self.memory = "0 40000000 0 80000000"
         with self.assertRaisesRegex(ValueError, "memory placeholder"):
+            self.check()
+
+    def test_reject_separate_memory_bank(self):
+        self.root_nodes += "memory@40000000\n"
+        with self.assertRaisesRegex(ValueError, "Unverified memory@ bank"):
             self.check()
 
     def test_reject_bootargs(self):
