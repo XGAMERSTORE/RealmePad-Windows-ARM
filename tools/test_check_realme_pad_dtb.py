@@ -62,6 +62,16 @@ class RealmePadDtbTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unverified memory@ bank"):
             self.check()
 
+    def test_reject_reserved_memory_node(self):
+        self.root_nodes += "reserved-memory\\n"
+        with self.assertRaisesRegex(ValueError, "reserved-memory layout"):
+            self.check()
+
+    def test_reject_memreserve_header(self):
+        self.dump = "/memreserve/ 0x40000000 0x100000;\\n/ { }; "
+        with self.assertRaisesRegex(ValueError, "memreserve entry"):
+            self.check()
+
     def test_reject_bootargs(self):
         self.props[("/chosen", "bootargs")] = "console=ttyS0"
         with self.assertRaisesRegex(ValueError, "boot arguments"):
