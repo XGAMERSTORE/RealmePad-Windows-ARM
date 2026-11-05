@@ -24,7 +24,7 @@ class InventoryTests(unittest.TestCase):
                 '  "get-state") echo device ;;\n'
                 '  "shell getprop "*) echo test-value ;;\n'
                 '  "shell uname -a") echo test-kernel ;;\n'
-                '  "shell ls /dev/block/by-name 2>/dev/null || true") echo boot ;;\n'
+                '  "shell ls /dev/block/by-name") echo boot ;;\n'
                 '  *) exit 42 ;;\n'
                 'esac\n'
             )
@@ -34,7 +34,7 @@ class InventoryTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             commands = log.read_text().splitlines()
             expected = ["get-state"] + ["shell getprop " + p for p in PROPERTIES] + [
-                "shell uname -a", "shell ls /dev/block/by-name 2>/dev/null || true"
+                "shell uname -a", "shell ls /dev/block/by-name"
             ]
             self.assertEqual(commands, expected)
             self.assertIn("ro.product.model: test-value", result.stdout)
