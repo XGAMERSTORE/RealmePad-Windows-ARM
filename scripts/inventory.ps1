@@ -18,6 +18,6 @@ Write-Output "Kernel:"
 & adb shell uname -a
 if ($LASTEXITCODE -ne 0) { throw "ADB kernel metadata read failed." }
 Write-Output "Partition names (metadata only):"
-& adb shell 'ls /dev/block/by-name 2>/dev/null || true'
-if ($LASTEXITCODE -ne 0) { throw "ADB partition-name metadata read failed." }
+& adb shell 'ls /dev/block/by-name'
+if ($LASTEXITCODE -ne 0) { Write-Warning "Partition-name metadata unavailable (no partitions read or modified)." }
 Write-Output "Do NOT publish serial numbers, IMEI or raw partition contents."
