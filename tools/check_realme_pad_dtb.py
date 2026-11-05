@@ -26,7 +26,7 @@ def validate(dtb: pathlib.Path):
     # A skeleton-only /memory placeholder must not be mistaken for real DRAM.
     memory = subprocess.run(["fdtget", "-t", "x", str(dtb), "/memory", "reg"],
                             text=True, capture_output=True, check=False)
-    if memory.returncode != 0 or any(int(v, 16) for v in memory.stdout.split()):
+    if memory.returncode != 0 or memory.stdout.split() != ["0", "0", "0", "0"]:
         raise ValueError("Experimental DTB must retain an unconfigured /memory placeholder")
     # /memory is only a placeholder. Reject separately inherited memory@ banks
     # rather than silently accepting an unverified physical DRAM layout.
