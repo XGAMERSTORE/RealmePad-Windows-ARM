@@ -1,0 +1,49 @@
+/dts-v1/;
+#include <config.h>
+#include "mt6768.dtsi"
+#include "skeleton64.dtsi"
+
+/*
+ * Realme Pad RMP2102 / RMP2103 U-Boot board-tree starting point.
+ *
+ * No static DRAM bank, framebuffer, pstore or UART address is assumed here.
+ * LK-provided FDT memory/reservations must be validated and transferred
+ * before this can be used for booting. NOT FLASHABLE.
+ */
+/ {
+    model = "realme Pad (RMP2102/RMP2103) - experimental";
+    compatible = "realme,rmp6768", "mediatek,mt6768";
+
+    chosen {
+        tick-timer = &gpt;
+    };
+
+    /*
+     * The generic skeleton provides /memory. It must be populated from
+     * verified LK runtime FDT; never copy Xiaomi DRAM or carveout values.
+     */
+};
+
+&uart0 {
+    status = "disabled";
+};
+
+&usb2 {
+    status = "disabled";
+};
+
+&usb2phy {
+    status = "disabled";
+};
+
+&usb2port0 {
+    status = "disabled";
+};
+
+&mmc0 {
+    status = "disabled";
+};
+
+&mmc1 {
+    status = "disabled";
+};
