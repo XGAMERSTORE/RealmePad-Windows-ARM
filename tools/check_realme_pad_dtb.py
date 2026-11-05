@@ -5,7 +5,6 @@ import pathlib
 import subprocess
 
 EXPECTED_MODEL = "realme Pad (RMP2102/RMP2103) - experimental"
-DISABLED = ("/soc/serial@11002000",)  # Not authoritative; node path varies upstream.
 
 
 def get_property(dtb: pathlib.Path, node: str, prop: str):
@@ -24,6 +23,14 @@ def validate(dtb: pathlib.Path):
         raise ValueError("Realme Pad compatible missing")
     if any(name in compatible.lower() for name in ("xiaomi", "lancelot", "merlin")):
         raise ValueError("Xiaomi identity found in experimental tree")
+    # A skeleton-only /memory placeholder must not be mistaken for real DRAM.
+    memory = subprocess.run(["fdtget", "-t", "x", str(dtb), "/memory", "reg"],
+                            text=True, capture_output=True, check=False)
+    if memory.returncode != 0 or any(int(v, 16) for v in memory.stdout.split()):
+        raise ValueError("Experimental DTB must retain an unconfigured /memory placeholder")
+    for node in ("/",):
+        if get_property(dtb, node, "bootargs") is not None:
+            raise ValueError("Unexpected hard-coded boot arguments")
     # Check entire flattened tree, not only a guessed /framebuffer node.
     dump = subprocess.run(["fdtdump", str(dtb)], capture_output=True, text=True, check=True)
     if "simple-framebuffer" in dump.stdout:
