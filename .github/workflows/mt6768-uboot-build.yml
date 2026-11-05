@@ -73,6 +73,19 @@ jobs:
             bootloader/uboot/mt6768-realme-pad.dts > realme-pad-preprocessed.dts
           dtc -I dts -O dtb -o realme-pad-experimental.dtb realme-pad-preprocessed.dts
           test -s realme-pad-experimental.dtb
+          # Fail closed if the experimental tree silently inherits a Xiaomi identity
+          # or enables peripherals whose Realme Pad addresses are unverified.
+          fdtget -t s realme-pad-experimental.dtb / model | grep -F 'realme Pad (RMP2102/RMP2103)'
+          fdtget -t s realme-pad-experimental.dtb / compatible | grep -F 'realme,rmp6768'
+          ! fdtget -t s realme-pad-experimental.dtb / compatible | grep -Eiq 'xiaomi|lancelot|merlin'
+          python3 - <<'PY'
+          import subprocess
+          dtb = 'realme-pad-experimental.dtb'
+          for path in ('/framebuffer', '/framebuffer@0'):
+              if subprocess.run(['fdtget', dtb, path, 'reg'], capture_output=True).returncode == 0:
+                  raise SystemExit(f'Unexpected inherited framebuffer: {path}')
+          print('Experimental Realme Pad DTB identity checks passed (not hardware validation)')
+          PY
           make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j2
           test -s u-boot/u-boot.bin
           python3 tools/check_arm64_image.py u-boot/u-boot.bin
