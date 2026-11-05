@@ -40,6 +40,7 @@ jobs:
           set -euo pipefail
           git clone https://github.com/mt6768-mainline/u-boot.git u-boot
           git -C u-boot checkout --detach 0f587c97b74dbc161769a82b63249948eb15e143
+          test "$(git -C u-boot rev-parse HEAD)" = 0f587c97b74dbc161769a82b63249948eb15e143
           git clone https://github.com/hataketsu/mt6768-mainline-notes.git notes
           git -C notes checkout --detach 5db190b4570eb0276b52d652d914bd73fcdd8319
           test "$(git -C notes rev-parse HEAD)" = 5db190b4570eb0276b52d652d914bd73fcdd8319
@@ -51,7 +52,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git -C u-boot -c user.name="MT6768 CI Patch Applicator" -c user.email="mt6768-ci@users.noreply.github.com" am "$PWD"/notes/uboot-patches/00*.patch
+          if ! git -C u-boot -c user.name="MT6768 CI Patch Applicator" -c user.email="mt6768-ci@users.noreply.github.com" am "$PWD"/notes/uboot-patches/00*.patch; then
+            git -C u-boot am --show-current-patch=diff > failed-board-patch.diff || true
+            git -C u-boot am --abort || true
+            echo 'Pinned MT6768 patch series did not apply; inspect failed-board-patch.diff' >&2
+            exit 1
+          fi
+          git -C u-boot rev-parse HEAD > patched-upstream-commit.txt
           test -f u-boot/configs/mt6768_defconfig
           test -f u-boot/board/mediatek/mt6768/Makefile
           git -C u-boot log -3 --oneline
@@ -104,6 +111,8 @@ jobs:
             u-boot/u-boot.bin
             u-boot.bin.sha256
             upstream-commit.txt
+            patched-upstream-commit.txt
+            failed-board-patch.diff
             notes-commit.txt
             compiler-version.txt
             u-boot-reference.config
