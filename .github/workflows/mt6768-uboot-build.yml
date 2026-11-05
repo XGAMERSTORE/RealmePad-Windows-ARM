@@ -7,6 +7,7 @@ on:
       - '.github/workflows/mt6768-uboot-build.yml'
       - 'tools/check_arm64_image.py'
       - 'tools/test_check_arm64_image.py'
+      - 'bootloader/uboot/mt6768-realme-pad.dts'
       - 'docs/REALME_PAD_HARDWARE_EVIDENCE.md'
 
 permissions:
@@ -29,7 +30,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu make bc bison flex \
-            libssl-dev libgnutls28-dev libncurses-dev python3-dev swig
+            libssl-dev libgnutls28-dev libncurses-dev python3-dev swig device-tree-compiler
 
       - name: Fetch pinned MT6768 base and published board patch series
         shell: bash
@@ -66,6 +67,12 @@ jobs:
         run: |
           set -euo pipefail
           make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- mt6768_defconfig
+          cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \\
+            -I u-boot/arch/arm/dts -I u-boot/include \\
+            -I u-boot/arch/arm/include -I u-boot/include/generated \\
+            bootloader/uboot/mt6768-realme-pad.dts > realme-pad-preprocessed.dts
+          dtc -I dts -O dtb -o realme-pad-experimental.dtb realme-pad-preprocessed.dts
+          test -s realme-pad-experimental.dtb
           make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j2
           test -s u-boot/u-boot.bin
           python3 tools/check_arm64_image.py u-boot/u-boot.bin
@@ -84,6 +91,7 @@ jobs:
             notes-commit.txt
             compiler-version.txt
             u-boot-reference.config
+            realme-pad-experimental.dtb
           if-no-files-found: error
 
 # This compiles an independently published Redmi 9 (lancelot) reference port.
