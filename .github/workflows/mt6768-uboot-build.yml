@@ -73,6 +73,16 @@ jobs:
             bootloader/uboot/mt6768-realme-pad.dts > realme-pad-preprocessed.dts
           dtc -I dts -O dtb -o realme-pad-experimental.dtb realme-pad-preprocessed.dts
           test -s realme-pad-experimental.dtb
+          test "$(fdtget -t s realme-pad-experimental.dtb / compatible | awk '{print $1}')" = 'realme,rmp6768'
+          for node in /soc/serial@11002000 /soc/mmc@11230000; do
+            # Device addresses vary between DTS revisions; do not assume nodes exist.
+            if fdtget -t s realme-pad-experimental.dtb "$node" status >/dev/null 2>&1; then
+              test "$(fdtget -t s realme-pad-experimental.dtb "$node" status)" = disabled
+            fi
+          done
+          if fdtdump realme-pad-experimental.dtb 2>/dev/null | grep -Eq 'reg = <0x0 0x40000000 0x0 0x80000000>'; then
+            echo 'Rejected: copied 2GiB generic DRAM bank'; exit 1
+          fi
           # Fail closed if the experimental tree silently inherits a Xiaomi identity
           # or enables peripherals whose Realme Pad addresses are unverified.
           fdtget -t s realme-pad-experimental.dtb / model | grep -F 'realme Pad (RMP2102/RMP2103)'
