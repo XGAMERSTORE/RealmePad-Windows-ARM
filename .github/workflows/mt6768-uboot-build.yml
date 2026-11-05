@@ -6,12 +6,20 @@ on:
     paths:
       - '.github/workflows/mt6768-uboot-build.yml'
       - 'tools/check_arm64_image.py'
+      - 'tools/test_check_arm64_image.py'
       - 'docs/REALME_PAD_HARDWARE_EVIDENCE.md'
 
 permissions:
   contents: read
 
 jobs:
+  test-arm64-header:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run boot image validator unit tests
+        run: python3 -m unittest discover -s tools -p 'test_*.py' -v
+
   build-mt6768-reference:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
