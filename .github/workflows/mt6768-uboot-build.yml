@@ -70,62 +70,8 @@ jobs:
           aarch64-linux-gnu-gcc --version | head -n 1 | tee compiler-version.txt
           test -f u-boot/arch/arm/dts/mt6768-generic.dts
           # Published MT6768 patch series does not promise a Xiaomi-specific Kconfig symbol.
-          # Record actual target symbols instead of blocking on an unverified assumption.
-          grep -E '^CONFIG_TARGET_[A-Z0-9_]+=y patched MT6768 Redmi 9 reference (NOT Realme Pad)
-        shell: bash
-        run: |
-          set -euo pipefail
-          make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- mt6768_defconfig
-          # The reference binary must never be confused with a Realme Pad port.
-          grep -E '^CONFIG_TARGET_[A-Z0-9_]+=y -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
-            -I u-boot/arch/arm/dts -I u-boot/include \
-            -I u-boot/arch/arm/include -I u-boot/include/generated \
-            bootloader/uboot/mt6768-realme-pad.dts > realme-pad-preprocessed.dts
-          dtc -I dts -O dtb -o realme-pad-experimental.dtb realme-pad-preprocessed.dts
-          test -s realme-pad-experimental.dtb
-          test "$(fdtget -t s realme-pad-experimental.dtb / compatible | awk '{print $1}')" = 'realme,rmp6768'
-          for node in /soc/serial@11002000 /soc/mmc@11230000; do
-            # Device addresses vary between DTS revisions; do not assume nodes exist.
-            if fdtget -t s realme-pad-experimental.dtb "$node" status >/dev/null 2>&1; then
-              test "$(fdtget -t s realme-pad-experimental.dtb "$node" status)" = disabled
-            fi
-          done
-          if fdtdump realme-pad-experimental.dtb 2>/dev/null | grep -Eq 'reg = <0x0 0x40000000 0x0 0x80000000>'; then
-            echo 'Rejected: copied 2GiB generic DRAM bank'; exit 1
-          fi
-          python3 tools/check_realme_pad_dtb.py realme-pad-experimental.dtb
-          make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j2
-          test -s u-boot/u-boot.bin
-          # u-boot.bin is a raw binary, NOT a Linux ARM64 Image with a 64-byte header.
-          # Validate the linked ELF architecture instead of misparsing the raw binary.
-          test -s u-boot/u-boot
-          aarch64-linux-gnu-readelf -h u-boot/u-boot > u-boot-elf-header.txt
-          grep -Eq 'Machine:[[:space:]]*AArch64' u-boot-elf-header.txt
-          grep -Eq 'Class:[[:space:]]*ELF64' u-boot-elf-header.txt
-          sha256sum u-boot/u-boot.bin > u-boot.bin.sha256
-          cp u-boot/.config u-boot-reference.config
-          test -s u-boot-reference.config
-
-      - name: Publish research-only artifact and source revisions
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: mt6768-redmi9-reference-NOT-FOR-FLASHING
-          path: |
-            u-boot/u-boot.bin
-            u-boot-elf-header.txt
-            u-boot.bin.sha256
-            upstream-commit.txt
-            patched-upstream-commit.txt
-            failed-board-patch.diff
-            notes-commit.txt
-            compiler-version.txt
-            reference-target-symbols.txt
-            built-target-symbols.txt
-            u-boot-reference.config
-            realme-pad-experimental.dtb
-          if-no-files-found: warn
- u-boot/configs/mt6768_defconfig > reference-target-symbols.txt || true
+          # Record actual target symbols instead of assuming a Xiaomi-specific symbol.
+          grep -E '^CONFIG_TARGET_[A-Z0-9_]+=y$' u-boot/configs/mt6768_defconfig > reference-target-symbols.txt || true
           cat reference-target-symbols.txt
 
       - name: Build patched MT6768 Redmi 9 reference (NOT Realme Pad)
@@ -133,57 +79,7 @@ jobs:
         run: |
           set -euo pipefail
           make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- mt6768_defconfig
-          # The reference binary must never be confused with a Realme Pad port.
-          grep -E '^CONFIG_TARGET_[A-Z0-9_]+=y
-          cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
-            -I u-boot/arch/arm/dts -I u-boot/include \
-            -I u-boot/arch/arm/include -I u-boot/include/generated \
-            bootloader/uboot/mt6768-realme-pad.dts > realme-pad-preprocessed.dts
-          dtc -I dts -O dtb -o realme-pad-experimental.dtb realme-pad-preprocessed.dts
-          test -s realme-pad-experimental.dtb
-          test "$(fdtget -t s realme-pad-experimental.dtb / compatible | awk '{print $1}')" = 'realme,rmp6768'
-          for node in /soc/serial@11002000 /soc/mmc@11230000; do
-            # Device addresses vary between DTS revisions; do not assume nodes exist.
-            if fdtget -t s realme-pad-experimental.dtb "$node" status >/dev/null 2>&1; then
-              test "$(fdtget -t s realme-pad-experimental.dtb "$node" status)" = disabled
-            fi
-          done
-          if fdtdump realme-pad-experimental.dtb 2>/dev/null | grep -Eq 'reg = <0x0 0x40000000 0x0 0x80000000>'; then
-            echo 'Rejected: copied 2GiB generic DRAM bank'; exit 1
-          fi
-          python3 tools/check_realme_pad_dtb.py realme-pad-experimental.dtb
-          make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j2
-          test -s u-boot/u-boot.bin
-          # u-boot.bin is a raw binary, NOT a Linux ARM64 Image with a 64-byte header.
-          # Validate the linked ELF architecture instead of misparsing the raw binary.
-          test -s u-boot/u-boot
-          aarch64-linux-gnu-readelf -h u-boot/u-boot > u-boot-elf-header.txt
-          grep -Eq 'Machine:[[:space:]]*AArch64' u-boot-elf-header.txt
-          grep -Eq 'Class:[[:space:]]*ELF64' u-boot-elf-header.txt
-          sha256sum u-boot/u-boot.bin > u-boot.bin.sha256
-          cp u-boot/.config u-boot-reference.config
-          test -s u-boot-reference.config
-
-      - name: Publish research-only artifact and source revisions
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: mt6768-redmi9-reference-NOT-FOR-FLASHING
-          path: |
-            u-boot/u-boot.bin
-            u-boot-elf-header.txt
-            u-boot.bin.sha256
-            upstream-commit.txt
-            patched-upstream-commit.txt
-            failed-board-patch.diff
-            notes-commit.txt
-            compiler-version.txt
-            reference-target-symbols.txt
-            built-target-symbols.txt
-            u-boot-reference.config
-            realme-pad-experimental.dtb
-          if-no-files-found: warn
- u-boot/.config > built-target-symbols.txt || true
+          grep -E '^CONFIG_TARGET_[A-Z0-9_]+=y$' u-boot/.config > built-target-symbols.txt || true
           cat built-target-symbols.txt
           cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
             -I u-boot/arch/arm/dts -I u-boot/include \
@@ -233,66 +129,6 @@ jobs:
             u-boot-reference.config
             realme-pad-experimental.dtb
           if-no-files-found: warn
- u-boot/configs/mt6768_defconfig > reference-target-symbols.txt || true
-          cat reference-target-symbols.txt
 
-      - name: Build patched MT6768 Redmi 9 reference (NOT Realme Pad)
-        shell: bash
-        run: |
-          set -euo pipefail
-          make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- mt6768_defconfig
-          # The reference binary must never be confused with a Realme Pad port.
-          grep -E '^CONFIG_TARGET_[A-Z0-9_]+=y
-          cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
-            -I u-boot/arch/arm/dts -I u-boot/include \
-            -I u-boot/arch/arm/include -I u-boot/include/generated \
-            bootloader/uboot/mt6768-realme-pad.dts > realme-pad-preprocessed.dts
-          dtc -I dts -O dtb -o realme-pad-experimental.dtb realme-pad-preprocessed.dts
-          test -s realme-pad-experimental.dtb
-          test "$(fdtget -t s realme-pad-experimental.dtb / compatible | awk '{print $1}')" = 'realme,rmp6768'
-          for node in /soc/serial@11002000 /soc/mmc@11230000; do
-            # Device addresses vary between DTS revisions; do not assume nodes exist.
-            if fdtget -t s realme-pad-experimental.dtb "$node" status >/dev/null 2>&1; then
-              test "$(fdtget -t s realme-pad-experimental.dtb "$node" status)" = disabled
-            fi
-          done
-          if fdtdump realme-pad-experimental.dtb 2>/dev/null | grep -Eq 'reg = <0x0 0x40000000 0x0 0x80000000>'; then
-            echo 'Rejected: copied 2GiB generic DRAM bank'; exit 1
-          fi
-          python3 tools/check_realme_pad_dtb.py realme-pad-experimental.dtb
-          make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j2
-          test -s u-boot/u-boot.bin
-          # u-boot.bin is a raw binary, NOT a Linux ARM64 Image with a 64-byte header.
-          # Validate the linked ELF architecture instead of misparsing the raw binary.
-          test -s u-boot/u-boot
-          aarch64-linux-gnu-readelf -h u-boot/u-boot > u-boot-elf-header.txt
-          grep -Eq 'Machine:[[:space:]]*AArch64' u-boot-elf-header.txt
-          grep -Eq 'Class:[[:space:]]*ELF64' u-boot-elf-header.txt
-          sha256sum u-boot/u-boot.bin > u-boot.bin.sha256
-          cp u-boot/.config u-boot-reference.config
-          test -s u-boot-reference.config
-
-      - name: Publish research-only artifact and source revisions
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: mt6768-redmi9-reference-NOT-FOR-FLASHING
-          path: |
-            u-boot/u-boot.bin
-            u-boot-elf-header.txt
-            u-boot.bin.sha256
-            upstream-commit.txt
-            patched-upstream-commit.txt
-            failed-board-patch.diff
-            notes-commit.txt
-            compiler-version.txt
-            reference-target-symbols.txt
-            built-target-symbols.txt
-            u-boot-reference.config
-            realme-pad-experimental.dtb
-          if-no-files-found: warn
-
-# This compiles an independently published Redmi 9 (lancelot) reference port.
-# It is NOT an RMP2102/RMP2103 board port. Do not flash its artifacts.
-# Realme Pad LK handoff, RAM carveouts, display, recovery and verified boot
-# require independent device-specific evidence and hardware validation.
+# This compiles an independently published Redmi 9 reference port.
+# NOT a Realme Pad RMP2102/RMP2103 port. NEVER flash these artifacts.
