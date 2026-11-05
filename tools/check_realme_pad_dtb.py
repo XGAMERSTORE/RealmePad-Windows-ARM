@@ -28,11 +28,11 @@ def validate(dtb: pathlib.Path):
                             text=True, capture_output=True, check=False)
     if memory.returncode != 0 or any(int(v, 16) for v in memory.stdout.split()):
         raise ValueError("Experimental DTB must retain an unconfigured /memory placeholder")
-    for node in ("/",):
-        if get_property(dtb, node, "bootargs") is not None:
-            raise ValueError("Unexpected hard-coded boot arguments")
+    if get_property(dtb, "/chosen", "bootargs") is not None:
+        raise ValueError("Unexpected hard-coded boot arguments")
     # Check entire flattened tree, not only a guessed /framebuffer node.
-    dump = subprocess.run(["fdtdump", str(dtb)], capture_output=True, text=True, check=True)
+    dump = subprocess.run(["dtc", "-I", "dtb", "-O", "dts", str(dtb)],
+                          capture_output=True, text=True, check=True)
     if "simple-framebuffer" in dump.stdout:
         raise ValueError("Unverified simple-framebuffer is enabled/present")
     if "0x7d9b0000" in dump.stdout.lower():
