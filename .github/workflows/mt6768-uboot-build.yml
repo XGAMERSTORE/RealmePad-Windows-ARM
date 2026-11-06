@@ -81,6 +81,10 @@ jobs:
           make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- mt6768_defconfig
           grep -E '^CONFIG_TARGET_[A-Z0-9_]+=y$' u-boot/.config > built-target-symbols.txt || true
           cat built-target-symbols.txt
+          # U-Boot generates include/config.h during prepare, not defconfig.
+          # The experimental DTS includes config.h; preprocess only after prepare.
+          make -C u-boot ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- prepare
+          test -s u-boot/include/config.h
           cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
             -I u-boot/arch/arm/dts -I u-boot/include \
             -I u-boot/arch/arm/include -I u-boot/include/generated \
