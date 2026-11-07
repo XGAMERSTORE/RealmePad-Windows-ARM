@@ -33,11 +33,13 @@ def inspect(blob):
             break
         if size == 0 or address + size > (1 << 64):
             raise ValueError("invalid FDT memreserve range")
-        if max(reserve_offset, os) < min(cursor, os + nb) or max(reserve_offset, ot) < min(cursor, ot + ns):
-            raise ValueError("FDT memreserve overlaps data blocks")
         reservations.append(("RESERVED", f"base=0x{address:x} size=0x{size:x}"))
     else:
         raise ValueError("unterminated FDT memreserve table")
+    # Include the mandatory zero terminator when checking reservation-table overlap.
+    # A zero-only table can otherwise hide inside the structure or strings block.
+    if max(reserve_offset, os) < min(cursor, os + nb) or max(reserve_offset, ot) < min(cursor, ot + ns):
+        raise ValueError("FDT memreserve overlaps data blocks")
     block, names = blob[os:os+nb], blob[ot:ot+ns]
     pos, stack, ac, sc, found, ram_ranges = 0, [], [2], [1], list(reservations), []
     while pos + 4 <= len(block):
