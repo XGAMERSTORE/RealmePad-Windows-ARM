@@ -6,6 +6,7 @@ boots, flashes, or claims the device can run Windows.
 """
 import argparse
 import json
+import re
 from pathlib import Path
 
 MODELS = {"rmp2102": "LTE", "rmp2103": "Wi-Fi"}
@@ -16,7 +17,8 @@ def analyze(report):
         raise ValueError("Missing Android properties")
     model = str(props.get("ro.product.model", "")).strip().lower()
     device = str(props.get("ro.product.device", "")).strip().lower()
-    candidates = [k for k in MODELS if k in model]
+    # A model token must stand alone: e.g. "not-rmp2102" is not proof.
+    candidates = [k for k in MODELS if re.search(r"(?<![a-z0-9_-])" + k + r"(?![a-z0-9_-])", model)]
     variant = MODELS[candidates[0]] if len(candidates) == 1 else "unconfirmed"
     boot_state = str(props.get("ro.boot.verifiedbootstate", "")).lower()
     device_state = str(props.get("ro.boot.vbmeta.device_state", "")).lower()
