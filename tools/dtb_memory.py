@@ -19,8 +19,27 @@ def inspect(blob):
     # masquerade as valid node/property data and produce misleading RAM maps.
     if max(os, ot) < min(os + nb, ot + ns):
         raise ValueError("FDT structure and strings blocks overlap")
+    # The memreserve table is distinct from /reserved-memory and may describe
+    # firmware-owned RAM. Do not report a map without acknowledging it.
+    reserve_offset = struct.unpack_from(">I", blob, 16)[0]
+    if reserve_offset < 40 or reserve_offset + 16 > total or reserve_offset % 8:
+        raise ValueError("invalid FDT memreserve offset")
+    cursor = reserve_offset
+    reservations = []
+    while cursor + 16 <= total:
+        address, size = struct.unpack_from(">QQ", blob, cursor)
+        cursor += 16
+        if address == 0 and size == 0:
+            break
+        if size == 0 or address + size > (1 << 64):
+            raise ValueError("invalid FDT memreserve range")
+        if max(reserve_offset, os) < min(cursor, os + nb) or max(reserve_offset, ot) < min(cursor, ot + ns):
+            raise ValueError("FDT memreserve overlaps data blocks")
+        reservations.append(("RESERVED", f"base=0x{address:x} size=0x{size:x}"))
+    else:
+        raise ValueError("unterminated FDT memreserve table")
     block, names = blob[os:os+nb], blob[ot:ot+ns]
-    pos, stack, ac, sc, found, ram_ranges = 0, [], [2], [1], [], []
+    pos, stack, ac, sc, found, ram_ranges = 0, [], [2], [1], list(reservations), []
     while pos + 4 <= len(block):
         token, = struct.unpack_from(">I", block, pos)
         pos += 4
