@@ -56,6 +56,8 @@ def inspect(blob):
             if end < 0: raise ValueError("unterminated node")
             stack.append(block[pos:end].decode("ascii", "replace"))
             pos = (end + 4) & ~3
+            if pos > len(block):
+                raise ValueError("node name padding exceeds FDT structure block")
             ac.append(ac[-1]); sc.append(sc[-1])
         elif token == 2:
             if not stack: raise ValueError("unbalanced node")
