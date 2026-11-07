@@ -24,7 +24,8 @@ def analyze(report):
     warnings = []
     if variant == "unconfirmed":
         warnings.append("Exact model not confirmed; do not attempt device-specific boot images")
-    if "rmp6768" not in device and not candidates:
+    family_confirmed = "rmp6768" in device or len(candidates) == 1
+    if not family_confirmed:
         warnings.append("RMP6768 board family not confirmed")
     if boot_state not in ("green", "yellow", "orange", "red"):
         warnings.append("Verified boot state unavailable or unexpected")
@@ -36,7 +37,7 @@ def analyze(report):
         "variant": variant,
         "android_verified_boot_state": boot_state or "unknown",
         "android_device_state": device_state or "unknown",
-        "boot_research_possible": True,
+        "boot_research_possible": family_confirmed,
         "windows_boot_ready": False,
         "safe_to_flash": False,
         "warnings": warnings,
