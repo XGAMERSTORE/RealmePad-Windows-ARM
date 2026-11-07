@@ -77,6 +77,11 @@ class RealmePadDtbTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "reserved-memory layout"):
             self.check()
 
+    def test_reject_addressed_reserved_memory_node(self):
+        self.root_nodes += "reserved-memory@40000000\n"
+        with self.assertRaisesRegex(ValueError, "reserved-memory layout"):
+            self.check()
+
     def test_reject_memreserve_header(self):
         self.dump = "/memreserve/ 0x40000000 0x100000;\n/ { }; "
         with self.assertRaisesRegex(ValueError, "memreserve entry"):
