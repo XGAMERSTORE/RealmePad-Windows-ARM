@@ -67,6 +67,20 @@ class DtbMemoryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "memreserve overlaps"):
             inspect(bytes(blob))
 
+    def test_reject_truncated_node_name_padding(self):
+        blob = bytearray(fixture(struct.pack(">3I", 0, 0x40000000, 0x1000)))
+        # Structure ends immediately after the node NUL, before required padding.
+        structure = struct.pack(">I", 1) + b"a\\0"
+        strings = b"reg\\0"
+        struct_offset = 56
+        strings_offset = struct_offset + len(structure)
+        header = struct.pack(">10I", 0xd00dfeed, strings_offset + len(strings),
+                             struct_offset, strings_offset, 40, 17, 16, 0,
+                             len(strings), len(structure))
+        malformed = header + b"\\0" * 16 + structure + strings
+        with self.assertRaisesRegex(ValueError, "node name padding"):
+            inspect(malformed)
+
     def test_reject_zero_sized_ram(self):
         reg = struct.pack(">3I", 0, 0x40000000, 0)
         with self.assertRaisesRegex(ValueError, "invalid RAM range"):
