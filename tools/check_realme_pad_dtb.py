@@ -32,7 +32,8 @@ def validate(dtb: pathlib.Path):
     # rather than silently accepting an unverified physical DRAM layout.
     root_nodes = subprocess.run(["fdtget", "-l", str(dtb), "/"],
                                 text=True, capture_output=True, check=True)
-    if "reserved-memory" in root_nodes.stdout.split():
+    if any(node == "reserved-memory" or node.startswith("reserved-memory@")
+           for node in root_nodes.stdout.split()):
         raise ValueError("Unverified reserved-memory layout in experimental DTB")
     if any(node.startswith("memory@") for node in root_nodes.stdout.split()):
         raise ValueError("Unverified memory@ bank in experimental DTB")
