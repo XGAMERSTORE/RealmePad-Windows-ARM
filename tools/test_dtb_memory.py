@@ -42,6 +42,16 @@ class DtbMemoryTests(unittest.TestCase):
         rows = inspect(bytes(blob))
         self.assertIn(("RESERVED", "base=0x41000000 size=0x1000"), rows)
 
+    def test_reject_overlapping_firmware_reservations(self):
+        blob = bytearray(fixture(struct.pack(">3I", 0, 0x40000000, 0x10000000)))
+        blob[40:40] = (struct.pack(">QQ", 0x41000000, 0x2000)
+                       + struct.pack(">QQ", 0x41001000, 0x1000))
+        struct.pack_into(">I", blob, 4, len(blob))
+        struct.pack_into(">I", blob, 8, 88)
+        struct.pack_into(">I", blob, 12, struct.unpack_from(">I", blob, 12)[0] + 32)
+        with self.assertRaisesRegex(ValueError, "overlapping FDT memreserve"):
+            inspect(bytes(blob))
+
     def test_reject_unterminated_reservation_table(self):
         blob = bytearray(fixture(struct.pack(">3I", 0, 0x40000000, 0x10000000)))
         blob[40:56] = struct.pack(">QQ", 0x41000000, 0x1000)
