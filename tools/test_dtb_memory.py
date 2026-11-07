@@ -48,6 +48,15 @@ class DtbMemoryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "memreserve"):
             inspect(bytes(blob))
 
+    def test_reject_terminator_overlapping_structure(self):
+        blob = bytearray(fixture(struct.pack(">3I", 0, 0x40000000, 0x10000000)))
+        # A zero-only memreserve table starts eight bytes before the structure.
+        # The terminator must be included in the overlap check.
+        struct.pack_into(">I", blob, 16, 48)
+        blob[48:64] = b"\\0" * 16
+        with self.assertRaisesRegex(ValueError, "memreserve overlaps"):
+            inspect(bytes(blob))
+
     def test_reject_zero_sized_ram(self):
         reg = struct.pack(">3I", 0, 0x40000000, 0)
         with self.assertRaisesRegex(ValueError, "invalid RAM range"):
