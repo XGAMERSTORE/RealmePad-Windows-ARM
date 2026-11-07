@@ -5,7 +5,7 @@
 ## Public upstream evidence
 
 - https://github.com/mt6768-mainline/u-boot is a work-in-progress fork, not an RMP2102/RMP2103 port.
-- https://github.com/hataketsu/mt6768-mainline-notes describes LK -> U-Boot experiments on *Xiaomi* MT6768/MT6769 hardware. The notes report missing board files/defconfig in the public fork and device-specific framebuffer addresses. Do not reuse those addresses on Realme Pad.
+- https://github.com/hataketsu/mt6768-mainline-notes describes LK -> U-Boot experiments on *Xiaomi* MT6768/MT6769 hardware. The original public fork lacked board files/defconfig, but the researcher subsequently supplied patches and reports a booting U-Boot -> mainline Linux chain on Redmi 9 (lancelot). This **supersedes** the earlier claim that the Xiaomi port cannot build. The researcher's LK experiments also identify gzip-compressed kernel-slot payload and nonempty ramdisk as necessary for that Xiaomi boot path. These are **device-specific observations**, not established Realme Pad image requirements, signed-boot acceptance, or a safe flashing recipe. Xiaomi framebuffer and memory addresses must not be reused on Realme Pad.
 - https://github.com/Realme-Pad-Dev/android_kernel_realme_RMP6768/blob/arrow-13.1/build.config.RMP6768 lists mt6768.dtb, oppo8786.dtb, oppo8786_wlan.dtb, oppo8786_21697.dtb.
 - https://github.com/Realme-Pad-Dev/android_device_realme_RMP6768 documents both RMP2102 (LTE) and RMP2103 (Wi-Fi).
 
