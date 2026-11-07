@@ -92,6 +92,16 @@ class RealmePadDtbTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "boot arguments"):
             self.check()
 
+    def test_reject_unverified_stdout_path(self):
+        self.props[("/chosen", "stdout-path")] = "serial0:115200n8"
+        with self.assertRaisesRegex(ValueError, "Unverified chosen console"):
+            self.check()
+
+    def test_reject_legacy_stdout_path(self):
+        self.props[("/chosen", "linux,stdout-path")] = "/soc/serial@11002000"
+        with self.assertRaisesRegex(ValueError, "Unverified chosen console"):
+            self.check()
+
     def test_reject_inherited_framebuffer(self):
         self.dump = 'compatible = "simple-framebuffer";'
         with self.assertRaisesRegex(ValueError, "simple-framebuffer"):
