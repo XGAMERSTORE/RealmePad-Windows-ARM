@@ -49,8 +49,8 @@ def inspect(blob):
                 found.append(("compatible", value.rstrip(b"\0").replace(b"\0", b", ").decode("ascii", "replace")))
             if key == "reg" and stack and (stack[-1] == "memory" or stack[-1].startswith("memory@")):
                 a, s = ac[-2], sc[-2]
-                if a not in (1, 2) or s not in (1, 2) or len(value) % (4*(a+s)):
-                    raise ValueError("unsupported RAM reg encoding")
+                if a not in (1, 2) or s not in (1, 2) or not value or len(value) % (4*(a+s)):
+                    raise ValueError("unsupported or empty RAM reg encoding")
                 for i in range(0, len(value), 4*(a+s)):
                     cells = struct.unpack_from(">"+"I"*(a+s), value, i)
                     base = length = 0
