@@ -23,6 +23,16 @@ class BootEvidenceTests(unittest.TestCase):
         self.assertEqual(result["variant"], "LTE")
         self.assertFalse(result["windows_boot_ready"])
 
+    def test_reject_model_substring_in_other_identifier(self):
+        result = analyze({"properties": {"ro.product.model": "not-rmp2102", "ro.product.device": "unknown"}})
+        self.assertEqual(result["variant"], "unconfirmed")
+        self.assertFalse(result["boot_research_possible"])
+
+    def test_accept_model_with_separating_spaces(self):
+        result = analyze({"properties": {"ro.product.model": "realme Pad RMP2103", "ro.product.device": "unknown"}})
+        self.assertEqual(result["variant"], "Wi-Fi")
+        self.assertTrue(result["boot_research_possible"])
+
     def test_missing_properties_rejected(self):
         with self.assertRaisesRegex(ValueError, "Missing Android properties"):
             analyze({})
