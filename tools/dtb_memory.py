@@ -26,6 +26,7 @@ def inspect(blob):
         raise ValueError("invalid FDT memreserve offset")
     cursor = reserve_offset
     reservations = []
+    reserved_ranges = []
     while cursor + 16 <= total:
         address, size = struct.unpack_from(">QQ", blob, cursor)
         cursor += 16
@@ -33,6 +34,11 @@ def inspect(blob):
             break
         if size == 0 or address + size > (1 << 64):
             raise ValueError("invalid FDT memreserve range")
+        end = address + size
+        if any(address < prior_end and prior_start < end
+               for prior_start, prior_end in reserved_ranges):
+            raise ValueError("overlapping FDT memreserve ranges")
+        reserved_ranges.append((address, end))
         reservations.append(("RESERVED", f"base=0x{address:x} size=0x{size:x}"))
     else:
         raise ValueError("unterminated FDT memreserve table")
