@@ -39,6 +39,10 @@ def validate(dtb: pathlib.Path):
         raise ValueError("Unverified memory@ bank in experimental DTB")
     if get_property(dtb, "/chosen", "bootargs") is not None:
         raise ValueError("Unexpected hard-coded boot arguments")
+    # A console selected without board UART evidence could access unsafe MMIO.
+    for prop in ("stdout-path", "linux,stdout-path"):
+        if get_property(dtb, "/chosen", prop) is not None:
+            raise ValueError(f"Unverified chosen console property: {prop}")
     # Check entire flattened tree, not only a guessed /framebuffer node.
     dump = subprocess.run(["dtc", "-I", "dtb", "-O", "dts", str(dtb)],
                           capture_output=True, text=True, check=True)
