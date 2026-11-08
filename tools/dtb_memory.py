@@ -72,6 +72,8 @@ def inspect(blob):
             key = names[noff:end].decode("ascii", "replace")
             value = block[pos:pos+size]
             pos = (pos + size + 3) & ~3
+            if pos > len(block):
+                raise ValueError("property padding exceeds FDT structure block")
             if key == "#address-cells" and size == 4: ac[-1] = int.from_bytes(value, "big")
             if key == "#size-cells" and size == 4: sc[-1] = int.from_bytes(value, "big")
             if key == "compatible":
