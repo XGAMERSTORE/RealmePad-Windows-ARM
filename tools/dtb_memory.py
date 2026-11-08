@@ -83,7 +83,7 @@ def inspect(blob):
             is_ram = (len(stack) == 2 and stack[0] == "" and
                       (stack[-1] == "memory" or stack[-1].startswith("memory@")))
             is_reserved = (len(stack) == 3 and stack[0] == ""
-                           and stack[1] == "reserved-memory"
+                           and (stack[1] == "reserved-memory" or stack[1].startswith("reserved-memory@"))
                            and stack[-1] != "" and key == "reg")
             if key == "reg" and (is_ram or is_reserved):
                 a, s = ac[-2], sc[-2]
