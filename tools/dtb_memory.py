@@ -58,7 +58,10 @@ def inspect(blob):
         if token == 1:
             end = block.find(b"\0", pos)
             if end < 0: raise ValueError("unterminated node")
-            stack.append(block[pos:end].decode("ascii", "replace"))
+            node_name = block[pos:end].decode("ascii", "replace")
+            if not stack and (pos != 4 or node_name):
+                raise ValueError("FDT root node must be first and unnamed")
+            stack.append(node_name)
             pos = (end + 4) & ~3
             if pos > len(block):
                 raise ValueError("node name padding exceeds FDT structure block")
