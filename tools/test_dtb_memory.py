@@ -5,11 +5,13 @@ import unittest
 from dtb_memory import inspect
 
 
-def fixture(reg):
+def fixture(reg, nested=False):
     be = lambda n: struct.pack(">I", n)
     node = lambda name: be(1) + (name.encode() + b"\0").ljust((len(name) + 4) & ~3, b"\0")
     prop = lambda value: be(3) + be(len(value)) + be(0) + value.ljust((len(value) + 3) & ~3, b"\0")
-    structure = node("") + node("memory@40000000") + prop(reg) + be(2) + be(2) + be(9)
+    structure = (node("") + (node("peripheral") if nested else b"") +
+                 node("memory@40000000") + prop(reg) + be(2) +
+                 (be(2) if nested else b"") + be(2) + be(9))
     strings = b"reg\0"
     # Standard FDT header; empty memreserve table terminator precedes structure.
     offset_struct = 40 + 16
@@ -30,6 +32,10 @@ class DtbMemoryTests(unittest.TestCase):
         reg = struct.pack(">3I", 0, 0x40000000, 0x10000000)
         rows = inspect(fixture(reg))
         self.assertIn(("RAM", "base=0x40000000 size=0x10000000"), rows)
+
+    def test_nested_memory_device_is_not_system_ram(self):
+        reg = struct.pack(">3I", 0, 0x40000000, 0x10000000)
+        self.assertFalse(any(kind == "RAM" for kind, _ in inspect(fixture(reg, nested=True))))
 
     def test_report_firmware_reservation(self):
         reg = struct.pack(">3I", 0, 0x40000000, 0x10000000)
