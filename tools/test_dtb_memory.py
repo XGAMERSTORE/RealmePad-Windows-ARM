@@ -24,6 +24,20 @@ def fixture(reg, nested=False, addressed_reserved=False):
 
 
 class DtbMemoryTests(unittest.TestCase):
+    def test_reject_named_root_node(self):
+        blob = bytearray(fixture(struct.pack(">3I", 0, 0x40000000, 0x1000)))
+        blob[60] = ord("x")
+        with self.assertRaisesRegex(ValueError, "root node"):
+            inspect(bytes(blob))
+
+    def test_allow_leading_nop_before_root(self):
+        blob = bytearray(fixture(struct.pack(">3I", 0, 0x40000000, 0x1000)))
+        blob[56:56] = struct.pack(">I", 4)
+        struct.pack_into(">I", blob, 4, len(blob))
+        struct.pack_into(">I", blob, 12, struct.unpack_from(">I", blob, 12)[0] + 4)
+        struct.pack_into(">I", blob, 36, struct.unpack_from(">I", blob, 36)[0] + 4)
+        self.assertTrue(any(kind == "RAM" for kind, _ in inspect(bytes(blob))))
+
     def test_reject_unaligned_structure_offset(self):
         blob = bytearray(fixture(struct.pack(">3I", 0, 0x40000000, 0x1000)))
         struct.pack_into(">I", blob, 8, 57)
