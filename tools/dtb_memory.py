@@ -48,7 +48,6 @@ def inspect(blob):
         raise ValueError("FDT memreserve overlaps data blocks")
     block, names = blob[os:os+nb], blob[ot:ot+ns]
     pos, stack, ac, sc, found, ram_ranges = 0, [], [2], [1], list(reservations), []
-    fixed_reserved = []
     while pos + 4 <= len(block):
         token, = struct.unpack_from(">I", block, pos)
         pos += 4
@@ -100,7 +99,6 @@ def inspect(blob):
                         ram_ranges.append((base, base + length))
                         found.append(("RAM", f"base=0x{base:x} size=0x{length:x}"))
                     else:
-                        fixed_reserved.append((base, base + length))
                         found.append(("RESERVED_NODE", f"base=0x{base:x} size=0x{length:x}"))
         elif token == 4:
             continue
