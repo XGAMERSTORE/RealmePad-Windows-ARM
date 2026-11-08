@@ -78,7 +78,10 @@ def inspect(blob):
             if key == "#size-cells" and size == 4: sc[-1] = int.from_bytes(value, "big")
             if key == "compatible":
                 found.append(("compatible", value.rstrip(b"\0").replace(b"\0", b", ").decode("ascii", "replace")))
-            is_ram = stack and (stack[-1] == "memory" or stack[-1].startswith("memory@"))
+            # Only root-level /memory nodes describe system RAM. A nested
+            # device named memory@... must not be treated as physical RAM.
+            is_ram = (len(stack) == 2 and stack[0] == "" and
+                      (stack[-1] == "memory" or stack[-1].startswith("memory@")))
             is_reserved = (len(stack) == 3 and stack[0] == ""
                            and stack[1] == "reserved-memory"
                            and stack[-1] != "" and key == "reg")
