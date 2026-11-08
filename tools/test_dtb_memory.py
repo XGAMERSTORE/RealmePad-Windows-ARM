@@ -81,6 +81,21 @@ class DtbMemoryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "node name padding"):
             inspect(malformed)
 
+    def test_reject_truncated_property_padding(self):
+        # A one-byte property value needs three padding bytes, all within
+        # the structure block; do not silently read into the strings block.
+        structure = (struct.pack(">I", 1) + b"\\0" * 4
+                     + struct.pack(">III", 3, 1, 0) + b"X")
+        strings = b"compatible\\0"
+        struct_offset = 56
+        strings_offset = struct_offset + len(structure)
+        header = struct.pack(">10I", 0xd00dfeed, strings_offset + len(strings),
+                             struct_offset, strings_offset, 40, 17, 16, 0,
+                             len(strings), len(structure))
+        malformed = header + b"\\0" * 16 + structure + strings
+        with self.assertRaisesRegex(ValueError, "property padding"):
+            inspect(malformed)
+
     def test_reject_zero_sized_ram(self):
         reg = struct.pack(">3I", 0, 0x40000000, 0)
         with self.assertRaisesRegex(ValueError, "invalid RAM range"):
