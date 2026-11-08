@@ -19,17 +19,24 @@ def analyze(report):
     device = str(props.get("ro.product.device", "")).strip().lower()
     # A model token must stand alone: e.g. "not-rmp2102" is not proof.
     candidates = [k for k in MODELS if re.search(r"(?<![a-z0-9_-])" + k + r"(?![a-z0-9_-])", model)]
-    variant = MODELS[candidates[0]] if len(candidates) == 1 else "unconfirmed"
+    # Conflicting retail identifiers must not be silently resolved to one variant.
+    device_variants = [k for k in MODELS if re.search(r"(?<![a-z0-9_-])" + k + r"(?![a-z0-9_-])", device)]
+    contradictory = len(candidates) > 1 or len(device_variants) > 1 or bool(
+        candidates and device_variants and candidates[0] != device_variants[0]
+    )
+    variant = MODELS[candidates[0]] if len(candidates) == 1 and not contradictory else "unconfirmed"
     boot_state = str(props.get("ro.boot.verifiedbootstate", "")).lower()
     device_state = str(props.get("ro.boot.vbmeta.device_state", "")).lower()
     # Device codename alone is not proof of the exact retail variant.
     warnings = []
     if variant == "unconfirmed":
         warnings.append("Exact model not confirmed; do not attempt device-specific boot images")
+    if contradictory:
+        warnings.append("Conflicting RMP2102/RMP2103 identifiers; investigate metadata before proceeding")
     # Require an isolated codename; embedded strings such as "not-rmp6768"
     # or "rmp6768_clone" are not board-family evidence.
     family_codename = re.search(r"(?<![a-z0-9_-])rmp6768(?![a-z0-9_-])", device) is not None
-    family_confirmed = family_codename or len(candidates) == 1
+    family_confirmed = (family_codename or len(candidates) == 1) and not contradictory
     if not family_confirmed:
         warnings.append("RMP6768 board family not confirmed")
     if boot_state not in ("green", "yellow", "orange", "red"):
