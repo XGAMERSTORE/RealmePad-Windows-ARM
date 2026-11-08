@@ -47,6 +47,24 @@ class BootEvidenceTests(unittest.TestCase):
         self.assertEqual(result["variant"], "Wi-Fi")
         self.assertTrue(result["boot_research_possible"])
 
+    def test_reject_conflicting_model_and_device_variant(self):
+        report = {"properties": {"ro.product.model": "RMP2102", "ro.product.device": "RMP2103"}}
+        result = analyze(report)
+        self.assertEqual(result["variant"], "unconfirmed")
+        self.assertFalse(result["boot_research_possible"])
+        self.assertTrue(any("Conflicting" in warning for warning in result["warnings"]))
+
+    def test_reject_both_variants_in_model(self):
+        report = {"properties": {"ro.product.model": "RMP2102 RMP2103", "ro.product.device": "RMP6768"}}
+        result = analyze(report)
+        self.assertEqual(result["variant"], "unconfirmed")
+        self.assertFalse(result["boot_research_possible"])
+
+    def test_reject_both_variants_in_device(self):
+        report = {"properties": {"ro.product.model": "RMP2102", "ro.product.device": "RMP2102 RMP2103"}}
+        result = analyze(report)
+        self.assertFalse(result["boot_research_possible"])
+
     def test_missing_properties_rejected(self):
         with self.assertRaisesRegex(ValueError, "Missing Android properties"):
             analyze({})
