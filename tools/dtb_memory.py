@@ -121,8 +121,10 @@ def inspect(blob):
         elif token == 4:
             continue
         elif token == 9:
-            if stack or not root_seen:
-                raise ValueError("FDT_END requires one closed root node")
+            if stack:
+                raise ValueError("FDT_END encountered before closing all nodes")
+            if not root_seen:
+                raise ValueError("FDT_END requires a root node")
             if pos != len(block):
                 raise ValueError("trailing data after FDT_END")
             return found
