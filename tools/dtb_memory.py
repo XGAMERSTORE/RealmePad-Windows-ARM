@@ -15,6 +15,10 @@ def inspect(blob):
         raise ValueError("invalid FDT header")
     if os < 40 or ot < 40 or os + nb > total or ot + ns > total:
         raise ValueError("FDT block outside file")
+    # FDT structure tokens are 32-bit aligned; accepting unaligned offsets
+    # risks interpreting malformed blobs as valid board memory evidence.
+    if os % 4 or ot % 4:
+        raise ValueError("unaligned FDT structure or strings offset")
     # Both blocks must be disjoint. Overlap would allow malformed input to
     # masquerade as valid node/property data and produce misleading RAM maps.
     if max(os, ot) < min(os + nb, ot + ns):
