@@ -52,6 +52,7 @@ def inspect(blob):
         raise ValueError("FDT memreserve overlaps data blocks")
     block, names = blob[os:os+nb], blob[ot:ot+ns]
     pos, stack, ac, sc, found, ram_ranges, node_reservations = 0, [], [2], [1], list(reservations), [], []
+    root_seen = False
     while pos + 4 <= len(block):
         token, = struct.unpack_from(">I", block, pos)
         pos += 4
@@ -59,8 +60,10 @@ def inspect(blob):
             end = block.find(b"\0", pos)
             if end < 0: raise ValueError("unterminated node")
             node_name = block[pos:end].decode("ascii", "replace")
-            if not stack and (pos != 4 or node_name):
-                raise ValueError("FDT root node must be first and unnamed")
+            if not stack:
+                if root_seen or node_name:
+                    raise ValueError("FDT root node must be unique and unnamed")
+                root_seen = True
             stack.append(node_name)
             pos = (end + 4) & ~3
             if pos > len(block):
@@ -118,8 +121,8 @@ def inspect(blob):
         elif token == 4:
             continue
         elif token == 9:
-            if stack:
-                raise ValueError("FDT_END encountered before closing all nodes")
+            if stack or not root_seen:
+                raise ValueError("FDT_END requires one closed root node")
             if pos != len(block):
                 raise ValueError("trailing data after FDT_END")
             return found
