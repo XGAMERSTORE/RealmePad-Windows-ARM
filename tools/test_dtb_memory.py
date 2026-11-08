@@ -24,6 +24,19 @@ def fixture(reg, nested=False, addressed_reserved=False):
 
 
 class DtbMemoryTests(unittest.TestCase):
+    def test_reject_unaligned_structure_offset(self):
+        blob = bytearray(fixture(struct.pack(">3I", 0, 0x40000000, 0x1000)))
+        struct.pack_into(">I", blob, 8, 57)
+        with self.assertRaisesRegex(ValueError, "unaligned FDT"):
+            inspect(bytes(blob))
+
+    def test_reject_unaligned_strings_offset(self):
+        blob = bytearray(fixture(struct.pack(">3I", 0, 0x40000000, 0x1000)))
+        offset = struct.unpack_from(">I", blob, 12)[0]
+        struct.pack_into(">I", blob, 12, offset + 1)
+        with self.assertRaisesRegex(ValueError, "unaligned FDT"):
+            inspect(bytes(blob))
+
     def test_reject_empty_ram_reg(self):
         with self.assertRaisesRegex(ValueError, "empty RAM reg"):
             inspect(fixture(b""))
