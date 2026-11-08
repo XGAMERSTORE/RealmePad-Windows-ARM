@@ -17,6 +17,20 @@ class BootEvidenceTests(unittest.TestCase):
         self.assertEqual(result["variant"], "unconfirmed")
         self.assertFalse(result["safe_to_flash"])
 
+    def test_reject_embedded_family_codename(self):
+        for device in ("not-rmp6768", "rmp6768_clone", "xrmp6768"):
+            with self.subTest(device=device):
+                result = analyze({"properties": {"ro.product.model": "Other Tablet",
+                                                  "ro.product.device": device}})
+                self.assertFalse(result["boot_research_possible"])
+                self.assertFalse(result["safe_to_flash"])
+
+    def test_accept_codename_separated_by_spaces(self):
+        result = analyze({"properties": {"ro.product.model": "realme Pad",
+                                          "ro.product.device": "realme RMP6768"}})
+        self.assertTrue(result["boot_research_possible"])
+        self.assertEqual(result["variant"], "unconfirmed")
+
     def test_exact_variant_allows_research_only(self):
         result = analyze({"properties": {"ro.product.model": "RMP2102", "ro.product.device": "RMP6768"}})
         self.assertTrue(result["boot_research_possible"])
