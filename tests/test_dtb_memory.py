@@ -79,6 +79,26 @@ class DtbTests(unittest.TestCase):
             inspect(bytes(blob))
 
 
+    def test_addressed_reserved_memory_is_not_lost(self):
+        blob = bytearray(dtb())
+        u = lambda n: struct.pack(">I", n)
+        pad = lambda b: b + b"\\0" * ((-len(b)) % 4)
+        # /reserved-memory@0/region@41000000 with fixed reg and
+        # inherited root 2-address/2-size cell encoding.
+        new_node = (u(1) + pad(b"reserved-memory@0\\0") +
+                    u(1) + pad(b"region@41000000\\0") +
+                    u(3) + u(16) + u(27) +
+                    u(0) + u(0x41000000) + u(0) + u(0x1000) +
+                    u(2) + u(2))
+        offset = struct.unpack_from(">I", blob, 8)[0]
+        size = struct.unpack_from(">I", blob, 36)[0]
+        blob[offset + size - 8:offset + size - 8] = new_node
+        struct.pack_into(">I", blob, 4, len(blob))
+        struct.pack_into(">I", blob, 12, struct.unpack_from(">I", blob, 12)[0] + len(new_node))
+        struct.pack_into(">I", blob, 36, size + len(new_node))
+        rows = inspect(bytes(blob))
+        self.assertIn(("RESERVED_NODE", "base=0x41000000 size=0x1000"), rows)
+
     def test_overlapping_ram_banks_rejected(self):
         blob = bytearray(dtb())
         structure_offset = struct.unpack_from(">I", blob, 8)[0]
