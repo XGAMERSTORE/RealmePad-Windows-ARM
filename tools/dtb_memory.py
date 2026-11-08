@@ -48,6 +48,7 @@ def inspect(blob):
         raise ValueError("FDT memreserve overlaps data blocks")
     block, names = blob[os:os+nb], blob[ot:ot+ns]
     pos, stack, ac, sc, found, ram_ranges = 0, [], [2], [1], list(reservations), []
+    fixed_reserved = []
     while pos + 4 <= len(block):
         token, = struct.unpack_from(">I", block, pos)
         pos += 4
@@ -78,7 +79,10 @@ def inspect(blob):
             if key == "#size-cells" and size == 4: sc[-1] = int.from_bytes(value, "big")
             if key == "compatible":
                 found.append(("compatible", value.rstrip(b"\0").replace(b"\0", b", ").decode("ascii", "replace")))
-            if key == "reg" and stack and (stack[-1] == "memory" or stack[-1].startswith("memory@")):
+            is_ram = stack and (stack[-1] == "memory" or stack[-1].startswith("memory@"))
+            is_reserved = (len(stack) >= 3 and stack[-2] == "reserved-memory"
+                           and stack[-1] != "" and key == "reg")
+            if key == "reg" and (is_ram or is_reserved):
                 a, s = ac[-2], sc[-2]
                 if a not in (1, 2) or s not in (1, 2) or not value or len(value) % (4*(a+s)):
                     raise ValueError("unsupported or empty RAM reg encoding")
@@ -89,11 +93,15 @@ def inspect(blob):
                     for c in cells[a:]: length = (length << 32) | c
                     if length == 0 or base + length > (1 << 64):
                         raise ValueError("invalid RAM range: empty or exceeds 64-bit physical address space")
-                    for old_base, old_end in ram_ranges:
-                        if base < old_end and old_base < base + length:
-                            raise ValueError("overlapping RAM ranges")
-                    ram_ranges.append((base, base + length))
-                    found.append(("RAM", f"base=0x{base:x} size=0x{length:x}"))
+                    if is_ram:
+                        for old_base, old_end in ram_ranges:
+                            if base < old_end and old_base < base + length:
+                                raise ValueError("overlapping RAM ranges")
+                        ram_ranges.append((base, base + length))
+                        found.append(("RAM", f"base=0x{base:x} size=0x{length:x}"))
+                    else:
+                        fixed_reserved.append((base, base + length))
+                        found.append(("RESERVED_NODE", f"base=0x{base:x} size=0x{length:x}"))
         elif token == 4:
             continue
         elif token == 9:
@@ -116,6 +124,7 @@ def main():
         parser.error(str(exc))
     for key, value in rows:
         print(f"{key}: {value}")
+    print("NOTE: /reserved-memory nodes with dynamic size (no reg) cannot be resolved offline.")
     print("NOT VERIFIED: LK handoff, RAM ownership, firmware load address, Realme Pad boot")
 
 if __name__ == "__main__":
