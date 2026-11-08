@@ -26,7 +26,10 @@ def analyze(report):
     warnings = []
     if variant == "unconfirmed":
         warnings.append("Exact model not confirmed; do not attempt device-specific boot images")
-    family_confirmed = "rmp6768" in device or len(candidates) == 1
+    # Require an isolated codename; embedded strings such as "not-rmp6768"
+    # or "rmp6768_clone" are not board-family evidence.
+    family_codename = re.search(r"(?<![a-z0-9_-])rmp6768(?![a-z0-9_-])", device) is not None
+    family_confirmed = family_codename or len(candidates) == 1
     if not family_confirmed:
         warnings.append("RMP6768 board family not confirmed")
     if boot_state not in ("green", "yellow", "orange", "red"):
