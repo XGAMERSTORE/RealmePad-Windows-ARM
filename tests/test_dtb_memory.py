@@ -119,3 +119,23 @@ class DtbTests(unittest.TestCase):
         struct.pack_into(">I", blob, 36, structure_size + len(new_node))
         with self.assertRaisesRegex(ValueError, "overlapping RAM"):
             inspect(bytes(blob))
+
+    def test_parent_cells_after_memory_node(self):
+        blob = dtb()
+        u = lambda n: struct.pack(">I", n)
+        pad = lambda b: b + b"\0" * ((-len(b)) % 4)
+        # Root defaults are 2 address cells and 1 size cell, but the
+        # actual root properties (2/2) occur after the memory node.
+        root = u(1) + pad(b"\0")
+        address = u(3) + u(4) + u(0) + u(2)
+        size = u(3) + u(4) + u(15) + u(2)
+        memory = (u(1) + pad(b"memory@40000000\0") +
+                  u(3) + u(16) + u(27) +
+                  u(0) + u(0x40000000) + u(0) + u(0x80000000) + u(2))
+        body = root + memory + address + size + u(2) + u(9)
+        names = b"#address-cells\0#size-cells\0reg\0compatible\0"
+        header = struct.pack(">10I", 0xd00dfeed, 56 + len(body) + len(names),
+                             56, 56 + len(body), 40, 17, 16, 0,
+                             len(names), len(body))
+        rows = inspect(header + b"\0" * 16 + body + names)
+        self.assertIn(("RAM", "base=0x40000000 size=0x80000000"), rows)
