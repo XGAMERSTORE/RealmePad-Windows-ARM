@@ -52,6 +52,7 @@ def inspect(blob):
         raise ValueError("FDT memreserve overlaps data blocks")
     block, names = blob[os:os+nb], blob[ot:ot+ns]
     pos, stack, ac, sc, found, ram_ranges, node_reservations = 0, [], [2], [1], list(reservations), [], []
+    pending_regs, node_ids, node_cells = [], [], {}
     root_seen = False
     while pos + 4 <= len(block):
         token, = struct.unpack_from(">I", block, pos)
@@ -65,13 +66,15 @@ def inspect(blob):
                     raise ValueError("FDT root node must be unique and unnamed")
                 root_seen = True
             stack.append(node_name)
+            node_ids.append(len(node_cells))
+            node_cells[node_ids[-1]] = [ac[-1], sc[-1]]
             pos = (end + 4) & ~3
             if pos > len(block):
                 raise ValueError("node name padding exceeds FDT structure block")
             ac.append(ac[-1]); sc.append(sc[-1])
         elif token == 2:
             if not stack: raise ValueError("unbalanced node")
-            stack.pop(); ac.pop(); sc.pop()
+            stack.pop(); ac.pop(); sc.pop(); node_ids.pop()
         elif token == 3:
             if pos + 8 > len(block): raise ValueError("truncated property")
             size, noff = struct.unpack_from(">II", block, pos); pos += 8
@@ -86,6 +89,8 @@ def inspect(blob):
                 raise ValueError("property padding exceeds FDT structure block")
             if key == "#address-cells" and size == 4: ac[-1] = int.from_bytes(value, "big")
             if key == "#size-cells" and size == 4: sc[-1] = int.from_bytes(value, "big")
+            if key in ("#address-cells", "#size-cells") and size == 4:
+                node_cells[node_ids[-1]][0 if key == "#address-cells" else 1] = int.from_bytes(value, "big")
             if key == "compatible":
                 found.append(("compatible", value.rstrip(b"\0").replace(b"\0", b", ").decode("ascii", "replace")))
             # Only root-level /memory nodes describe system RAM. A nested
@@ -96,7 +101,18 @@ def inspect(blob):
                            and (stack[1] == "reserved-memory" or stack[1].startswith("reserved-memory@"))
                            and stack[-1] != "" and key == "reg")
             if key == "reg" and (is_ram or is_reserved):
-                a, s = ac[-2], sc[-2]
+                pending_regs.append((node_ids[-2], value, is_ram, is_reserved))
+        elif token == 4:
+            continue
+        elif token == 9:
+            if stack:
+                raise ValueError("FDT_END encountered before closing all nodes")
+            if not root_seen:
+                raise ValueError("FDT_END requires a root node")
+            if pos != len(block):
+                raise ValueError("trailing data after FDT_END")
+            for parent_id, value, is_ram, is_reserved in pending_regs:
+                a, s = node_cells[parent_id]
                 if a not in (1, 2) or s not in (1, 2) or not value or len(value) % (4*(a+s)):
                     raise ValueError("unsupported or empty RAM reg encoding")
                 for i in range(0, len(value), 4*(a+s)):
@@ -118,15 +134,6 @@ def inspect(blob):
                             raise ValueError("overlapping fixed reserved-memory nodes")
                         node_reservations.append((base, base + length))
                         found.append(("RESERVED_NODE", f"base=0x{base:x} size=0x{length:x}"))
-        elif token == 4:
-            continue
-        elif token == 9:
-            if stack:
-                raise ValueError("FDT_END encountered before closing all nodes")
-            if not root_seen:
-                raise ValueError("FDT_END requires a root node")
-            if pos != len(block):
-                raise ValueError("trailing data after FDT_END")
             return found
         else:
             raise ValueError(f"invalid FDT token {token}")
