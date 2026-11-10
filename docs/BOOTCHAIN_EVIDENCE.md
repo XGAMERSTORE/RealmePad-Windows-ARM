@@ -47,3 +47,25 @@ None of those values should be guessed from another MediaTek board.
 **Artifact boundary:** `uefi/WindowsBoot` is only an EDK II UEFI application
 that requires existing working UEFI. Even a successful host build cannot
 be described as a complete firmware port or proof of Windows boot.
+
+## Source-quality update (2026-11-10)
+
+A newly indexed third-party Realme Pad guide dated 2026-10-04
+(https://techfanciers.com/realme-pad-complete-development-guide) contains
+**internally conflicting variant labels**: its feature table labels RMP2102
+as Wi-Fi and RMP2103 as LTE, while its introduction and the independently
+maintained Realme Pad device trees identify RMP2102 as VoLTE/LTE and RMP2103
+as Wi-Fi. Do **not** use the guide's variant table as a firmware selection
+or recovery authority. Its generic fastboot/AVB flashing instructions are
+not evidence of a tested, recoverable custom AArch64 handoff on either model.
+
+An RMP2102 bootloop report dated 2026-06-07
+(https://www.reddit.com/r/FirmwareDevelopment/comments/1tzfn2e/plz_help_plzzzz/)
+describes unsuccessful custom ROM installation and missing stock backup.
+It is anecdotal, but reinforces the recovery gate; it does not establish
+bootchain behavior or a safe restore method.
+
+**Decision remains BLOCKED:** no verified per-device non-destructive
+LK-to-custom-payload handoff and no independently validated exact-device
+recovery. Do not infer UEFI or Windows support from Android device trees,
+third-party unlock recipes, or emulator diagnostics.
