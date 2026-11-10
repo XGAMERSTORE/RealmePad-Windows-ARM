@@ -15,6 +15,8 @@ class CandidateRangeTests(unittest.TestCase):
         self.assertTrue(report["offline_layout_consistent"])
         self.assertFalse(report["safe_to_boot"])
         self.assertFalse(report["lk_handoff_verified"])
+        self.assertFalse(report["runtime_dtb_provenance_verified"])
+        self.assertFalse(report["dynamic_reserved_memory_resolved"])
 
     def test_reject_unrelated_board_even_when_memory_fits(self):
         rows = [("compatible", "xiaomi,lancelot"),
