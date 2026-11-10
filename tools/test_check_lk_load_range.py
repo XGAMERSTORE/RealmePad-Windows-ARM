@@ -7,7 +7,7 @@ from check_lk_load_range import assess
 
 class CandidateRangeTests(unittest.TestCase):
     def check(self, rows, address, size):
-        with patch("check_lk_load_range.inspect", return_value=rows):
+        with patch("check_lk_load_range.inspect", return_value=[("compatible", "realme,rmp6768, mediatek,mt6768")] + rows):
             return assess(b"offline fixture", address, size)
 
     def test_unreserved_region_is_not_boot_authorized(self):
@@ -15,6 +15,14 @@ class CandidateRangeTests(unittest.TestCase):
         self.assertTrue(report["offline_layout_consistent"])
         self.assertFalse(report["safe_to_boot"])
         self.assertFalse(report["lk_handoff_verified"])
+
+    def test_reject_unrelated_board_even_when_memory_fits(self):
+        rows = [("compatible", "xiaomi,lancelot"),
+                ("RAM", "base=0x40000000 size=0x100000")]
+        with patch("check_lk_load_range.inspect", return_value=rows):
+            report = assess(b"offline fixture", 0x40010000, 0x1000)
+        self.assertFalse(report["realme_pad_compatible_found"])
+        self.assertFalse(report["offline_layout_consistent"])
 
     def test_reject_outside_ram(self):
         report = self.check([("RAM", "base=0x40000000 size=0x100000")], 0x50000000, 0x1000)
