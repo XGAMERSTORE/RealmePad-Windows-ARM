@@ -6,6 +6,8 @@ import sys
 MODELS = {"RMP2102": "LTE", "RMP2103": "Wi-Fi"}
 REQUIRED = (
     "recoverable_boot_path",
+    "stock_restore_verified_on_device",
+    "non_destructive_uefi_entry_verified_on_device",
     "board_uefi",
     "acpi_tables",
     "windows_storage_driver",
