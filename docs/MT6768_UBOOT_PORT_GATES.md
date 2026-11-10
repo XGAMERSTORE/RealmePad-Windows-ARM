@@ -9,6 +9,26 @@
 - https://github.com/Realme-Pad-Dev/android_kernel_realme_RMP6768/blob/arrow-13.1/build.config.RMP6768 lists mt6768.dtb, oppo8786.dtb, oppo8786_wlan.dtb, oppo8786_21697.dtb.
 - https://github.com/Realme-Pad-Dev/android_device_realme_RMP6768 documents both RMP2102 (LTE) and RMP2103 (Wi-Fi).
 
+## Upstream snapshot verified 2026-11-10 (not a Realme Pad port)
+
+The public `mt6768-mainline/u-boot` main branch currently points to
+[`4227900a21da`](https://github.com/mt6768-mainline/u-boot/commit/4227900a21da).
+Recent upstream commits include MMC CMD23 support
+([`4227900a21da`](https://github.com/mt6768-mainline/u-boot/commit/4227900a21da)),
+MMC I/O-voltage switching
+([`568b7ba99baf`](https://github.com/mt6768-mainline/u-boot/commit/568b7ba99baf)),
+and an MT6768 T-PHY addition
+([`4cb79cf00cb4`](https://github.com/mt6768-mainline/u-boot/commit/4cb79cf00cb4)).
+These are useful *upstream implementation candidates* for storage and PHY
+bring-up, **not** proof of RMP2102/RMP2103 hardware compatibility or of
+an authenticated LK handoff. Do not import board-specific memory addresses,
+device trees or boot artifacts from other vendors.
+
+Before using any of these changes for the Realme Pad, require an exact-model
+DT/clock/regulator comparison and a reproducible host-side build at a pinned
+revision. No physical boot, stock restore, or secure-boot acceptance was
+verified by this snapshot.
+
 ## Gates before writing or booting firmware
 
 1. **Reproducible upstream build:** obtain a specific pinned U-Boot revision and verify a clean AARCH64 build with its actual board config. Record compiler version, config and SHA-256 of build outputs. Upstream Xiaomi configs are not Realme Pad support.
