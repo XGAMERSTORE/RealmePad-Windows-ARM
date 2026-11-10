@@ -25,7 +25,11 @@ def parse_ranges(rows):
 def assess(blob, address, size):
     if address < 0 or size <= 0 or address + size > 1 << 64:
         raise ValueError("Invalid candidate physical address or size")
-    ranges = parse_ranges(inspect(blob))
+    rows = inspect(blob)
+    # An unrelated board DTB must never produce a positive Realme Pad layout result.
+    board_hint = any(kind == "compatible" and "realme,rmp6768" in value.split(", ")
+                     for kind, value in rows)
+    ranges = parse_ranges(rows)
     end = address + size
     within_ram = any(start <= address and end <= stop for start, stop in ranges["RAM"])
     collisions = [
@@ -37,9 +41,10 @@ def assess(blob, address, size):
     return {
         "candidate_base": hex(address),
         "candidate_size": hex(size),
+        "realme_pad_compatible_found": board_hint,
         "within_reported_ram": within_ram,
         "reservation_collisions": collisions,
-        "offline_layout_consistent": within_ram and not collisions,
+        "offline_layout_consistent": board_hint and within_ram and not collisions,
         "lk_handoff_verified": False,
         "safe_to_boot": False,
         "safe_to_flash": False,
