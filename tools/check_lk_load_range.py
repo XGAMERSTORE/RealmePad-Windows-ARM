@@ -45,10 +45,12 @@ def assess(blob, address, size):
         "within_reported_ram": within_ram,
         "reservation_collisions": collisions,
         "offline_layout_consistent": board_hint and within_ram and not collisions,
+        "runtime_dtb_provenance_verified": False,
+        "dynamic_reserved_memory_resolved": False,
         "lk_handoff_verified": False,
         "safe_to_boot": False,
         "safe_to_flash": False,
-        "note": "DTB evidence alone cannot establish LK/firmware ownership or a safe boot address.",
+        "note": "DTB provenance, dynamic reserved-memory, and LK/firmware ownership remain unverified; no boot address is authorized.",
     }
 
 
