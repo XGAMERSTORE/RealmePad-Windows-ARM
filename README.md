@@ -1,4 +1,6 @@
-# RealmePad-Windows-ARM
+# RealmePad-Windows-ARM (historical research)
+
+> **Project migration (Bookish OS):** This repository is retained as historical MT6768 / RMP2102 / RMP2103 bootchain research. The single operating-system product is now **[Bookish OS](https://github.com/XGAMERSTORE/Aevonyr-OS)**. Windows ARM is no longer the distribution target. Do not flash or treat diagnostic EFI/reference U-Boot as a working tablet bootloader. See [migration plan](https://github.com/XGAMERSTORE/Aevonyr-OS/blob/main/docs/BOOKISH_UNIFIED_OS.md).
 
 Experimental research project for **realme Pad 10.4 LTE (RMP2102) and Wi-Fi (RMP2103)** and possible Windows on ARM support.
 
