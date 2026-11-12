@@ -26,3 +26,9 @@ The published kernel build configuration names `ARCH=arm64`, `DEFCONFIG=RMP6768_
 4. Only after those gates: investigate a board-specific U-Boot/UEFI port and firmware-to-OS hardware descriptions. A diagnostic EFI binary alone does not demonstrate working UEFI or Windows.
 
 No flashing, partition writes, bootloader unlocking, or executable payload delivery is specified or authorized by this note.
+
+## Recovery source lead (not recovery validation)
+
+- Public recovery source tree: https://github.com/Realme-Pad-Dev/android_recovery_realme_RMP6768 (branch `11.0`, with `BoardConfig.mk`, `twrp_RMP6768.mk`, and recovery-related sources).
+- This establishes that recovery *source material* exists for the unified RMP6768 family. It does **not** demonstrate a tested stock-firmware restoration procedure for RMP2102 or RMP2103, a verified stock image, bootloader unlock support, or safe non-destructive chainloading.
+- Next offline check: compare recovery `BoardConfig.mk` partition assumptions with device-tree `BoardConfig.mk`, separately record RMP2102/RMP2103 evidence, and retain `stock_restore_verified_on_device=false` until each physical variant has independently verified evidence. Do not run or publish flash commands as a substitute for validation.
