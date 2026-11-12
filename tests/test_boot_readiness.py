@@ -1,4 +1,9 @@
+import json
+import subprocess
+import sys
+import tempfile
 import unittest
+from pathlib import Path
 from tools.boot_readiness import evaluate, REQUIRED
 
 class BootReadinessTests(unittest.TestCase):
@@ -21,6 +26,27 @@ class BootReadinessTests(unittest.TestCase):
         self.assertIn("stock_restore_verified_on_device", report["missing"])
         self.assertIn("non_destructive_uefi_entry_verified_on_device", report["missing"])
         self.assertFalse(report["flash_authorized"])
+
+    def test_cli_evidence_file_is_read_and_never_authorizes_flash(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "evidence.json"
+            path.write_text(json.dumps({"board_uefi": True}), encoding="utf-8")
+            run = subprocess.run([sys.executable, "-m", "tools.boot_readiness", "RMP2103",
+                                  "--evidence-file", str(path)], capture_output=True, text=True)
+            self.assertEqual(run.returncode, 2)
+            report = json.loads(run.stdout)
+            self.assertNotIn("board_uefi", report["missing"])
+            self.assertFalse(report["flash_authorized"])
+
+    def test_cli_rejects_malformed_json(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "bad.json"
+            path.write_text("{bad", encoding="utf-8")
+            run = subprocess.run([sys.executable, "-m", "tools.boot_readiness", "RMP2102",
+                                  "--evidence-file", str(path)], capture_output=True, text=True)
+            self.assertEqual(run.returncode, 2)
+            self.assertIn("Evidence error:", run.stderr)
+            self.assertFalse(run.stdout.strip())
 
     def test_unknown_model_rejected(self):
         with self.assertRaises(ValueError):
