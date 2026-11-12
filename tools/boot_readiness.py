@@ -30,6 +30,15 @@ def evaluate(model, evidence):
     return {"model": model, "variant": MODELS[model], "boot_ready": not missing,
             "missing": missing, "flash_authorized": False}
 
+def reject_duplicate_keys(pairs):
+    """Reject ambiguous JSON evidence instead of silently trusting the last value."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"Duplicate evidence key: {key}")
+        result[key] = value
+    return result
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("model", nargs="?", default="RMP2103", choices=sorted(MODELS))
@@ -37,7 +46,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     try:
         with open(args.evidence_file, encoding="utf-8") if args.evidence_file else contextlib.nullcontext(None) as stream:
-            evidence = json.load(stream) if stream is not None else {}
+            evidence = json.load(stream, object_pairs_hook=reject_duplicate_keys) if stream is not None else {}
         report = evaluate(args.model, evidence)
     except (OSError, ValueError) as exc:
         print(f"Evidence error: {exc}", file=sys.stderr)
