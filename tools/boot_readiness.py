@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fail-closed Windows ARM boot readiness gate for RMP2102/RMP2103."""
 import argparse
+import contextlib
 import json
 import sys
 
@@ -35,10 +36,10 @@ if __name__ == "__main__":
     parser.add_argument("--evidence-file", help="Local JSON evidence object (claims only; not hardware verification)")
     args = parser.parse_args()
     try:
-        with open(args.evidence_file, encoding="utf-8") if args.evidence_file else __import__("contextlib").nullcontext(None) as stream:
+        with open(args.evidence_file, encoding="utf-8") if args.evidence_file else contextlib.nullcontext(None) as stream:
             evidence = json.load(stream) if stream is not None else {}
         report = evaluate(args.model, evidence)
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError) as exc:
         print(f"Evidence error: {exc}", file=sys.stderr)
         sys.exit(2)
     print(json.dumps(report, indent=2))
