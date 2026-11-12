@@ -18,6 +18,8 @@ REQUIRED = (
 def evaluate(model, evidence):
     if model not in MODELS:
         raise ValueError("Unsupported or unverified Realme Pad model")
+    if not isinstance(evidence, dict):
+        raise ValueError("Evidence must be a JSON object/dictionary")
     missing = [key for key in REQUIRED if evidence.get(key) is not True]
     if model == "RMP2102" and evidence.get("windows_lte_driver") is not True:
         missing.append("windows_lte_driver")
