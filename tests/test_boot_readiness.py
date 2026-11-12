@@ -48,6 +48,26 @@ class BootReadinessTests(unittest.TestCase):
             self.assertIn("Evidence error:", run.stderr)
             self.assertFalse(run.stdout.strip())
 
+    def test_cli_rejects_duplicate_top_level_evidence_keys(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "duplicate.json"
+            path.write_text('{"board_uefi": true, "board_uefi": false}', encoding="utf-8")
+            run = subprocess.run([sys.executable, "-m", "tools.boot_readiness", "RMP2103",
+                                  "--evidence-file", str(path)], capture_output=True, text=True)
+            self.assertEqual(run.returncode, 2)
+            self.assertIn("Duplicate evidence key: board_uefi", run.stderr)
+            self.assertFalse(run.stdout.strip())
+
+    def test_cli_rejects_nested_duplicate_keys(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "nested.json"
+            path.write_text('{"nested": {"x": 1, "x": 2}}', encoding="utf-8")
+            run = subprocess.run([sys.executable, "-m", "tools.boot_readiness", "RMP2102",
+                                  "--evidence-file", str(path)], capture_output=True, text=True)
+            self.assertEqual(run.returncode, 2)
+            self.assertIn("Duplicate evidence key: x", run.stderr)
+            self.assertFalse(run.stdout.strip())
+
     def test_unknown_model_rejected(self):
         with self.assertRaises(ValueError):
             evaluate("RMP9999", {})
