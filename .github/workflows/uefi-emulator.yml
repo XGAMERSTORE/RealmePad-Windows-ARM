@@ -35,6 +35,7 @@ jobs:
           export GCC5_AARCH64_PREFIX=aarch64-linux-gnu-
           cd "$WORKSPACE"
           make -C BaseTools -j2
+          export PYTHON_COMMAND=python3
           source edksetup.sh
           build -a AARCH64 -t GCC5 -b DEBUG -p "$GITHUB_WORKSPACE/project/uefi/RmpResearchHost.dsc"
           find Build/RmpResearchHost -type f -name 'RmpResearchApp.efi' -print -quit | grep -q .
