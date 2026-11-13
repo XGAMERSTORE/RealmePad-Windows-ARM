@@ -27,7 +27,9 @@ def evaluate(model, evidence):
         missing.append("windows_lte_driver")
     if evidence.get("windows_wifi_driver") is not True:
         missing.append("windows_wifi_driver")
-    return {"model": model, "variant": MODELS[model], "boot_ready": False,\n            "claims_complete": not missing,\n            "hardware_verified": False,
+    return {"model": model, "variant": MODELS[model], "boot_ready": False,
+            "claims_complete": not missing,
+            "hardware_verified": False,
             "missing": missing, "flash_authorized": False}
 
 def reject_duplicate_keys(pairs):
