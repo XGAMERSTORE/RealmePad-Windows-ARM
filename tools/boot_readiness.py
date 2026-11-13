@@ -39,6 +39,10 @@ def reject_duplicate_keys(pairs):
         result[key] = value
     return result
 
+def reject_nonfinite_constant(value):
+    """Reject NaN and Infinity, which are not valid JSON evidence values."""
+    raise ValueError(f"Non-standard JSON constant: {value}")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("model", nargs="?", default="RMP2103", choices=sorted(MODELS))
@@ -46,7 +50,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     try:
         with open(args.evidence_file, encoding="utf-8") if args.evidence_file else contextlib.nullcontext(None) as stream:
-            evidence = json.load(stream, object_pairs_hook=reject_duplicate_keys) if stream is not None else {}
+            evidence = json.load(stream, object_pairs_hook=reject_duplicate_keys, parse_constant=reject_nonfinite_constant) if stream is not None else {}
         report = evaluate(args.model, evidence)
     except (OSError, ValueError) as exc:
         print(f"Evidence error: {exc}", file=sys.stderr)
