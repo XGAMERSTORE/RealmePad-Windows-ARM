@@ -26,5 +26,10 @@
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
 
+# Avoid GCC 13 synthesizing a libc memcpy call from EDK2 PrintLib loops
+# during LTO. EDK2 standalone EFI applications do not link libc.
+[BuildOptions]
+  GCC:*_*_AARCH64_CC_FLAGS = -fno-tree-loop-distribute-patterns
+
 [Components]
   uefi/RmpResearchApp/RmpResearchApp.inf
