@@ -26,12 +26,13 @@
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
 
-# Disable GCC link-time optimization for this host-only diagnostic build.
-# GCC 13 LTO can synthesize an unresolved libc memcpy in EDK2 BasePrintLib;
-# the previous loop-pattern flag alone did not prevent it (CI 43531258022).
-# This does not change any tablet bootchain or authorize flashing.
+# Keep EDK2 GCC5's compile/link LTO settings consistent. The earlier
+# -fno-lto override left GCC5's linker plugin flags enabled and caused
+# "ld: bad -plugin-opt option" (CI 43538381344).
+# Disable the loop-to-libcall pattern transformation where possible;
+# a freestanding memcpy implementation handles any remaining references.
 [BuildOptions]
-  GCC:*_*_AARCH64_CC_FLAGS = -fno-lto -fno-tree-loop-distribute-patterns
+  GCC:*_*_AARCH64_CC_FLAGS = -fno-tree-loop-distribute-patterns
 
 [Components]
   uefi/RmpResearchApp/RmpResearchApp.inf
