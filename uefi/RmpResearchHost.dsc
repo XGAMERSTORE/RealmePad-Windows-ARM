@@ -26,10 +26,12 @@
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
 
-# Avoid GCC 13 synthesizing a libc memcpy call from EDK2 PrintLib loops
-# during LTO. EDK2 standalone EFI applications do not link libc.
+# Disable GCC link-time optimization for this host-only diagnostic build.
+# GCC 13 LTO can synthesize an unresolved libc memcpy in EDK2 BasePrintLib;
+# the previous loop-pattern flag alone did not prevent it (CI 43531258022).
+# This does not change any tablet bootchain or authorize flashing.
 [BuildOptions]
-  GCC:*_*_AARCH64_CC_FLAGS = -fno-tree-loop-distribute-patterns
+  GCC:*_*_AARCH64_CC_FLAGS = -fno-lto -fno-tree-loop-distribute-patterns
 
 [Components]
   uefi/RmpResearchApp/RmpResearchApp.inf
