@@ -13,7 +13,9 @@ for p in ro.product.model ro.product.device ro.product.board ro.hardware ro.boar
   printf '%s: %s\n' "$p" "${value//$'\r'/}"
 done
 echo "Kernel:"
-adb shell uname -a || { echo "ADB kernel metadata read failed." >&2; exit 1; }
+for field in -r -m; do
+  adb shell uname "$field" || { echo "ADB kernel metadata read failed." >&2; exit 1; }
+done
 echo "Partition names (metadata only):"
 if ! adb shell 'ls /dev/block/by-name'; then
   echo "Partition-name metadata unavailable (no partitions read or modified)." >&2
