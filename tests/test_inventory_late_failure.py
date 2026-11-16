@@ -24,7 +24,7 @@ class InventoryLateFailureTests(unittest.TestCase):
                 'case "$*" in\n'
                 '  "get-state") echo device ;;\n'
                 '  "shell getprop "*) echo mock-value ;;\n'
-                '  "shell uname -a") exit 27 ;;\n'
+                '  "shell uname -r") exit 27 ;;\n'
                 '  *) exit 42 ;;\n'
                 'esac\n'
             )
@@ -34,7 +34,7 @@ class InventoryLateFailureTests(unittest.TestCase):
             result = subprocess.run(["bash", str(SCRIPT)], env=env, capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
             self.assertEqual(log.read_text().splitlines(),
-                             ["get-state"] + ["shell getprop " + p for p in PROPS] + ["shell uname -a"])
+                             ["get-state"] + ["shell getprop " + p for p in PROPS] + ["shell uname -r"])
             self.assertNotIn("Partition names", result.stdout)
 
 if __name__ == "__main__":
