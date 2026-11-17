@@ -3,20 +3,26 @@
 import argparse
 from pathlib import Path
 
-REQUIRED = ('configs/mt6768_defconfig', 'board/mediatek/mt6768')
+CONFIG = 'configs/mt6768_defconfig'
+BOARD = 'board/mediatek/mt6768'
 
 
 def check(root: Path) -> int:
     if not (root / 'Makefile').is_file() or not (root / 'configs').is_dir():
         print('ERROR: not a recognizable U-Boot source tree')
         return 2
-    missing = [name for name in REQUIRED if not (root / name).exists()]
-    for name in REQUIRED:
-        print(f'{"MISSING" if name in missing else "PRESENT"}: {name}')
-    if missing:
-        print('BLOCKED: source prerequisites missing; build and tablet boot NOT verified')
+    config = root / CONFIG
+    board = root / BOARD
+    checks = {
+        CONFIG: config.is_file() and config.stat().st_size > 0,
+        BOARD: board.is_dir() and any(p.is_file() for p in board.rglob('*')),
+    }
+    for name, valid in checks.items():
+        print(f'{"PRESENT" if valid else "MISSING/EMPTY"}: {name}')
+    if not all(checks.values()):
+        print('BLOCKED: source prerequisites missing or empty; build and tablet boot NOT verified')
         return 1
-    print('SOURCE GATE ONLY: prerequisites present; build and tablet boot NOT verified')
+    print('SOURCE GATE ONLY: nonempty prerequisites present; build and tablet boot NOT verified')
     return 0
 
 
