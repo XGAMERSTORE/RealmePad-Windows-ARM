@@ -19,6 +19,10 @@ class SourceGateTests(unittest.TestCase):
             status = gate.check(root)
         return status, output.getvalue()
 
+    def make_tree(self, root):
+        (root / 'Makefile').touch()
+        (root / 'configs').mkdir()
+
     def test_non_source_tree_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             status, output = self.run_gate(Path(tmp))
@@ -28,21 +32,21 @@ class SourceGateTests(unittest.TestCase):
     def test_missing_prerequisites_blocked(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / 'Makefile').touch()
-            (root / 'configs').mkdir()
+            self.make_tree(root)
             status, output = self.run_gate(root)
             self.assertEqual(status, 1)
-            self.assertIn('MISSING: configs/mt6768_defconfig', output)
-            self.assertIn('MISSING: board/mediatek/mt6768', output)
+            self.assertIn('MISSING/EMPTY: configs/mt6768_defconfig', output)
+            self.assertIn('MISSING/EMPTY: board/mediatek/mt6768', output)
             self.assertIn('NOT verified', output)
 
-    def test_present_prerequisites_are_not_boot_proof(self):
+    def test_nonempty_prerequisites_are_not_boot_proof(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / 'Makefile').touch()
-            (root / 'configs').mkdir()
-            (root / 'configs' / 'mt6768_defconfig').touch()
-            (root / 'board' / 'mediatek' / 'mt6768').mkdir(parents=True)
+            self.make_tree(root)
+            (root / 'configs' / 'mt6768_defconfig').write_text('CONFIG_ARM=y\n')
+            board = root / 'board' / 'mediatek' / 'mt6768'
+            board.mkdir(parents=True)
+            (board / 'Makefile').write_text('obj-y += board.o\n')
             status, output = self.run_gate(root)
             self.assertEqual(status, 0)
             self.assertIn('SOURCE GATE ONLY', output)
@@ -51,13 +55,23 @@ class SourceGateTests(unittest.TestCase):
     def test_partial_prerequisites_blocked(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / 'Makefile').touch()
-            (root / 'configs').mkdir()
-            (root / 'configs' / 'mt6768_defconfig').touch()
+            self.make_tree(root)
+            (root / 'configs' / 'mt6768_defconfig').write_text('CONFIG_ARM=y\n')
             status, output = self.run_gate(root)
             self.assertEqual(status, 1)
             self.assertIn('PRESENT: configs/mt6768_defconfig', output)
-            self.assertIn('MISSING: board/mediatek/mt6768', output)
+            self.assertIn('MISSING/EMPTY: board/mediatek/mt6768', output)
+
+    def test_empty_placeholders_cannot_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_tree(root)
+            (root / 'configs' / 'mt6768_defconfig').touch()
+            board = root / 'board' / 'mediatek' / 'mt6768'
+            board.mkdir(parents=True)
+            status, output = self.run_gate(root)
+            self.assertEqual(status, 1)
+            self.assertIn('MISSING/EMPTY', output)
 
 
 if __name__ == '__main__':
