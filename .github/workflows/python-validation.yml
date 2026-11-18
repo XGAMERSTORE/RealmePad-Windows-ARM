@@ -4,6 +4,7 @@ on:
     paths:
       - 'tools/**'
       - 'tests/**'
+      - 'scripts/**'
       - 'research/**'
       - '.github/workflows/python-validation.yml'
   pull_request:
@@ -19,7 +20,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile all Python modules
-        run: python -m compileall -q tools tests
+        run: python -m compileall -q tools tests scripts
       - name: Run complete Python regression suite
         run: |
           python -m unittest discover -s tests -p 'test_*.py' -v
