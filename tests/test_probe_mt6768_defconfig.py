@@ -24,12 +24,32 @@ class ProbeTests(unittest.TestCase):
     def valid_tree(self):
         (self.root / 'Makefile').write_text('all:\n\t@true\n')
         (self.root / 'configs').mkdir()
+        (self.root / 'configs' / 'mt6768_defconfig').write_text('CONFIG_ARM=y\n')
 
     def test_rejects_non_uboot_tree_without_running_commands(self):
         with patch.object(probe_module.subprocess, 'run') as run:
             self.assertEqual(probe_module.probe(self.root, self.out), 2)
             run.assert_not_called()
         self.assertFalse(self.out.exists())
+
+    def test_missing_defconfig_is_reported_without_make(self):
+        self.valid_tree()
+        (self.root / 'configs' / 'mt6768_defconfig').unlink()
+        with patch.object(probe_module.subprocess, 'run',
+                          return_value=subprocess.CompletedProcess([], 0, 'sha')) as run:
+            self.assertEqual(probe_module.probe(self.root, self.out), 1)
+        report = json.loads((self.out / 'mt6768_defconfig_probe.json').read_text())
+        self.assertIn('missing or empty', report['make_dry_run']['error'])
+        self.assertIsNone(report['make_dry_run']['command'])
+        self.assertEqual(run.call_count, 1)
+
+    def test_empty_defconfig_is_reported_without_make(self):
+        self.valid_tree()
+        (self.root / 'configs' / 'mt6768_defconfig').write_text('  ')
+        with patch.object(probe_module.subprocess, 'run',
+                          return_value=subprocess.CompletedProcess([], 0, 'sha')) as run:
+            self.assertEqual(probe_module.probe(self.root, self.out), 1)
+        self.assertEqual(run.call_count, 1)
 
     def test_failed_defconfig_is_reported_not_hidden(self):
         self.valid_tree()
