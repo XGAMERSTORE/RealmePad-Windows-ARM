@@ -24,6 +24,16 @@ def probe(root: Path, output: Path, timeout: int = 120) -> int:
             return {'command': argv, 'exit_code': None, 'error': str(exc)}
 
     git = run(['git', 'rev-parse', 'HEAD'])
+    config = root / 'configs' / 'mt6768_defconfig'
+    if not config.is_file() or not config.read_bytes().strip():
+        report = {'kind': 'host-only preflight; NOT a build or boot test',
+                  'git': git,
+                  'make_dry_run': {'command': None, 'exit_code': None,
+                                   'error': 'missing or empty configs/mt6768_defconfig; make not attempted'}}
+        (output / 'mt6768_defconfig_probe.json').write_text(
+            json.dumps(report, indent=2) + '\n')
+        print('ERROR: missing or empty MT6768 defconfig; make not attempted', file=sys.stderr)
+        return 1
     make = run(['make', '-n', 'O=' + str(output.resolve() / 'build'),
                 'ARCH=arm', 'CROSS_COMPILE=aarch64-linux-gnu-',
                 'mt6768_defconfig'])
