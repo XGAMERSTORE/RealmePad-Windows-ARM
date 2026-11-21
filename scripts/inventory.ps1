@@ -14,9 +14,11 @@ foreach ($p in $properties) {
     if ($LASTEXITCODE -ne 0) { throw "ADB property read failed: $p" }
     Write-Output ("{0}: {1}" -f $p, (($value | Out-String).Trim()))
 }
-Write-Output "Kernel:"
-& adb shell uname -a
-if ($LASTEXITCODE -ne 0) { throw "ADB kernel metadata read failed." }
+Write-Output "Kernel (release and architecture only):"
+foreach ($field in @("-r", "-m")) {
+    & adb shell uname $field
+    if ($LASTEXITCODE -ne 0) { throw "ADB kernel metadata read failed: $field" }
+}
 Write-Output "Partition names (metadata only):"
 & adb shell 'ls /dev/block/by-name'
 if ($LASTEXITCODE -ne 0) { Write-Warning "Partition-name metadata unavailable (no partitions read or modified)." }
