@@ -1,0 +1,28 @@
+name: Inventory regression tests
+
+on:
+  push:
+    paths:
+      - 'scripts/inventory.sh'
+      - 'tests/test_inventory_mock.sh'
+      - '.github/workflows/inventory-regression.yml'
+  pull_request:
+    paths:
+      - 'scripts/inventory.sh'
+      - 'tests/test_inventory_mock.sh'
+      - '.github/workflows/inventory-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-only-mock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Bash syntax
+        run: bash -n scripts/inventory.sh tests/test_inventory_mock.sh
+      - name: Run isolated ADB mock regression tests (no hardware)
+        run: bash tests/test_inventory_mock.sh
