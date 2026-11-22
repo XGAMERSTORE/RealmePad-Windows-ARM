@@ -50,3 +50,9 @@ The public [Redmi 9/lancelot MT6768 mainline notes](https://github.com/hataketsu
 **Do not copy** the Redmi 9 compression requirement, framebuffer/ramoops addresses, memory reservations, U-Boot patches, boot-image repacking workflow or recovery procedure onto Realme Pad. They are useful hypotheses and hazards to investigate, **not validated Realme Pad facts**. A successful compile, Android boot-image header or similar SoC cannot establish a safe LK handoff.
 
 **Read-only next gate, separately per variant:** document the exact model and board revision, obtain authorized non-destructive boot metadata and any publicly available *matching-device* FDT/reserved-memory evidence, and independently confirm a reversible recovery path. Until then, no flashing or device-side payload tests.
+
+## Public MT6768 U-Boot fork buildability gate
+
+The [mt6768-mainline/u-boot fork](https://github.com/mt6768-mainline/u-boot) is **not a drop-in bootloader for Realme Pad**. The independent [lancelot build investigation](https://github.com/hataketsu/mt6768-mainline-notes) reports missing `board/mediatek/mt6768/` support and `configs/mt6768_defconfig` in the base fork; its own device-specific patches fill those gaps for Xiaomi lancelot. A generic `mt6768-generic.dts` or a successful patched build for lancelot does not establish an RMP2102/RMP2103 board port, signed-image acceptance, memory layout, or a safe LK entry point.
+
+**Host-only verification gate:** before proposing a Realme Pad U-Boot/EDK2 binary, require a reproducible source revision, exact board configuration and device tree, clean cross-build logs, and a separately documented read-only device-specific memory/boot-chain inventory. No device writes or boot claims follow from a cross-build.
