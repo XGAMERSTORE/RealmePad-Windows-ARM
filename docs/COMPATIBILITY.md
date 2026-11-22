@@ -34,3 +34,11 @@ Before considering any device-side experiment, collect read-only, redacted ident
 6. **Usable system:** drivers, power management and recovery validated separately.
 
 Do not promote a result to a higher level without corresponding evidence. Similar hardware or third-party boot-image metadata alone is insufficient.
+
+## Public Android board configuration (research evidence, not a memory map)
+
+The public [RMP6768 LineageOS BoardConfig.mk](https://github.com/Realme-Pad-Dev/android_device_realme_RMP6768/blob/lineage-20.0/BoardConfig.mk) covers both RMP2102 and RMP2103 through its OTA device assertions. It declares `TARGET_BOARD_PLATFORM := mt6768`, `TARGET_ARCH := arm64`, boot image header version **2**, page size **2048**, base **0x40078000**, kernel offset **0x00008000**, ramdisk offset **0x07c08000**, and DTB offset **0x0bc08000**. It also enables Android Verified Boot (`BOARD_AVB_ENABLE := true`).
+
+These are **Android image-packaging parameters in a third-party device tree**, not measured DRAM reservations, firmware entry points, trusted boot signatures, or evidence of an LK-to-UEFI handoff. In particular, `TARGET_NO_BOOTLOADER := true` is an Android build setting, **not** proof that the physical device lacks a bootloader. The AVB test keys in this tree must not be confused with production signing keys. Do not use these offsets to load or flash EFI images.
+
+**Next evidence gate:** obtain separate, redacted read-only inventories for RMP2102 and RMP2103 and independently document a model-specific, recoverable boot path before any custom-code execution attempt.
