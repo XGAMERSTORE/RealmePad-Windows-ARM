@@ -42,3 +42,11 @@ The public [RMP6768 LineageOS BoardConfig.mk](https://github.com/Realme-Pad-Dev/
 These are **Android image-packaging parameters in a third-party device tree**, not measured DRAM reservations, firmware entry points, trusted boot signatures, or evidence of an LK-to-UEFI handoff. In particular, `TARGET_NO_BOOTLOADER := true` is an Android build setting, **not** proof that the physical device lacks a bootloader. The AVB test keys in this tree must not be confused with production signing keys. Do not use these offsets to load or flash EFI images.
 
 **Next evidence gate:** obtain separate, redacted read-only inventories for RMP2102 and RMP2103 and independently document a model-specific, recoverable boot path before any custom-code execution attempt.
+
+## MT6768 LK handoff lessons from another device (not Realme Pad proof)
+
+The public [Redmi 9/lancelot MT6768 mainline notes](https://github.com/hataketsu/mt6768-mainline-notes) describe an LK-to-U-Boot second-stage experiment on **Xiaomi Redmi 9**, not RMP2102 or RMP2103. In that specific setup, LK expected a **gzip-compressed** kernel payload, and passing a raw ARM64 image caused an `lk_crash`. The same research reports that probing an assumed 8 GiB DRAM range with U-Boot `get_ram_size()` touched secure memory and led to an invalid relocation; the working memory layout had to be derived from that device's LK-provided FDT and reserved regions.
+
+**Do not copy** the Redmi 9 compression requirement, framebuffer/ramoops addresses, memory reservations, U-Boot patches, boot-image repacking workflow or recovery procedure onto Realme Pad. They are useful hypotheses and hazards to investigate, **not validated Realme Pad facts**. A successful compile, Android boot-image header or similar SoC cannot establish a safe LK handoff.
+
+**Read-only next gate, separately per variant:** document the exact model and board revision, obtain authorized non-destructive boot metadata and any publicly available *matching-device* FDT/reserved-memory evidence, and independently confirm a reversible recovery path. Until then, no flashing or device-side payload tests.
