@@ -31,6 +31,26 @@ for scenario in ok offline unauthorized recovery_state multiple_devices property
     architecture_error) [[ "$status" != 0 ]] && grep -q 'ADB kernel metadata read failed' "$tmp/output" && grep -q 'shell uname -m' "$ADB_CALL_LOG" && ! grep -q 'shell ls /dev/block/by-name' "$ADB_CALL_LOG" ;;
     partition_error) [[ "$status" == 0 ]] && grep -q 'Partition-name metadata unavailable' "$tmp/output" ;;
   esac || { echo "FAIL: $scenario" >&2; exit 1; }
+  # Strict read-only allowlist: fail on *any* new ADB invocation, not only known dangerous verbs.
+  # Keep this list intentionally narrow; changes to inventory collection require review.
+  while IFS= read -r call; do
+    case "$call" in
+      'get-state'|\
+      'shell getprop ro.product.model'|\
+      'shell getprop ro.product.device'|\
+      'shell getprop ro.product.board'|\
+      'shell getprop ro.hardware'|\
+      'shell getprop ro.board.platform'|\
+      'shell getprop ro.build.version.release'|\
+      'shell getprop ro.build.version.sdk'|\
+      'shell getprop ro.boot.slot_suffix'|\
+      'shell getprop ro.boot.verifiedbootstate'|\
+      'shell uname -r'|\
+      'shell uname -m'|\
+      'shell ls /dev/block/by-name') ;;
+      *) printf 'FAIL: unexpected ADB invocation in %s: %s\\n' "$scenario" "$call" >&2; exit 1 ;;
+    esac
+  done < "$ADB_CALL_LOG"
   if grep -Eiq '(^|[[:space:]])(flash|erase|reboot|push|pull|root|remount|sideload|install|shell dd)([[:space:]]|$)' "$ADB_CALL_LOG"; then
     echo "FAIL: mutating adb command in $scenario" >&2; exit 1
   fi
