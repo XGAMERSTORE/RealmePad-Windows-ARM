@@ -74,7 +74,12 @@ class BootReadinessTests(unittest.TestCase):
     def test_no_flash_authorization_even_when_ready(self):
         evidence = {name: True for name in REQUIRED}
         evidence["windows_wifi_driver"] = True
-        self.assertFalse(evaluate("RMP2103", evidence)["flash_authorized"])
+        report = evaluate("RMP2103", evidence)
+        self.assertFalse(report["flash_authorized"])
+        self.assertTrue(report["claims_complete"])
+        self.assertFalse(report["hardware_verified"])
+        self.assertFalse(report["boot_ready"])
+        self.assertEqual(report["missing"], [])
 
 if __name__ == "__main__":
     unittest.main()

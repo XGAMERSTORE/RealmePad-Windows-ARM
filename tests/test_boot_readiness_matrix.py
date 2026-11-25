@@ -41,7 +41,9 @@ class BootReadinessMatrixTests(unittest.TestCase):
             if model == "RMP2102":
                 evidence["windows_lte_driver"] = True
             result = evaluate(model, evidence)
-            self.assertTrue(result["boot_ready"])
+            self.assertIs(result["boot_ready"], False)
+            self.assertIs(result["claims_complete"], True)
+            self.assertIs(result["hardware_verified"], False)
             self.assertEqual(result["missing"], [])
             self.assertIs(result["flash_authorized"], False)
 

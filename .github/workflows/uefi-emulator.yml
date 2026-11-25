@@ -35,7 +35,11 @@ jobs:
           export GCC5_AARCH64_PREFIX=aarch64-linux-gnu-
           cd "$WORKSPACE"
           make -C BaseTools -j2
+          export PYTHON_COMMAND=python3
+          # EDK2's setup script references optional variables; nounset breaks its initialization.
+          set +u
           source edksetup.sh
+          set -u
           build -a AARCH64 -t GCC5 -b DEBUG -p "$GITHUB_WORKSPACE/project/uefi/RmpResearchHost.dsc"
           find Build/RmpResearchHost -type f -name 'RmpResearchApp.efi' -print -quit | grep -q .
           find Build/RmpResearchHost -type f -name 'RmpResearchApp.efi' -print -quit | xargs -r -I '{}' cp '{}' "$GITHUB_WORKSPACE/RmpResearchApp.efi"

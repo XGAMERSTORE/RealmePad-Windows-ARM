@@ -11,6 +11,7 @@
 
 [Sources]
   RmpResearchApp.c
+  FreestandingMemCopy.c
 
 [Packages]
   MdePkg/MdePkg.dec

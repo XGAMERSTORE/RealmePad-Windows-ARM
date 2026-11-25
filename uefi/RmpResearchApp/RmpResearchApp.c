@@ -8,6 +8,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Guid/Acpi.h>
 #include <Library/BaseLib.h>
+#include <Library/BaseMemoryLib.h>
 
 EFI_STATUS
 EFIAPI

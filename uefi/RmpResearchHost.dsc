@@ -18,10 +18,21 @@
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
+  # Host-only diagnostic build: use EDK2's default null stack-check instance.
+  StackCheckLib|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
   UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
+  DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
+
+# Keep EDK2 GCC5's compile/link LTO settings consistent. The earlier
+# -fno-lto override left GCC5's linker plugin flags enabled and caused
+# "ld: bad -plugin-opt option" (CI 43538381344).
+# Disable the loop-to-libcall pattern transformation where possible;
+# a freestanding memcpy implementation handles any remaining references.
+[BuildOptions]
+  GCC:*_*_AARCH64_CC_FLAGS = -fno-tree-loop-distribute-patterns
 
 [Components]
   uefi/RmpResearchApp/RmpResearchApp.inf
